@@ -148,50 +148,33 @@
       .potential-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
       .potential-grid.global-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
 
-      /* Map Selector Section */
-      .map-selector-container {
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          margin: 30px 0 20px 0; padding-top: 30px; border-top: 1px solid var(--border-color);
-      }
-      .map-selector-container label {
-          color: var(--primary-light); font-weight: 700; font-size: 14px; margin-bottom: 10px;
-          text-transform: uppercase; letter-spacing: 0.1em; text-shadow: 0 0 10px var(--primary-dim);
-      }
+/* Update this class to ensure it doesn't shrink on tiny screens */
+.max-btn {
+    height: 40px; /* Matches input height */
+    padding: 0 16px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--primary-border);
+    color: var(--primary-light);
+    border-radius: var(--border-radius-sm);
+    font-weight: 800;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0; /* Prevents button from getting squashed on mobile */
+}
 
-      /* Map Controls Row */
-      .map-controls-row {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-          justify-content: center;
-      }
+.max-btn:hover {
+    background: rgba(59, 130, 246, 0.2); 
+    color: var(--primary-light);
+    border-color: var(--primary-light);
+}
 
-      /* Max All Button */
-      .max-btn {
-          height: 40px;
-          padding: 0 16px;
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid var(--primary-border);
-          color: var(--primary-light);
-          border-radius: var(--border-radius-sm);
-          font-weight: 800;
-          font-size: 12px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          white-space: nowrap;
-      }
-
-      .max-btn:hover {
-          background: rgba(59, 130, 246, 0.2); 
-          color: var(--primary-light);
-          border-color: var(--primary-light);
-      }
-
-      .max-btn:active {
-          transform: scale(0.96);
-      }
+.max-btn:active {
+    transform: scale(0.96);
+}
 
       /* Map Section Styles */
       .map-section { display: none; grid-template-columns: repeat(4, 1fr); gap: 18px; animation: fadeIn 0.3s ease; }
@@ -650,19 +633,19 @@
                     </div>
 
                     <!-- 2. Centered Map Selector -->
-                    <div class="map-selector-container">
-                        <label>Map Selection</label>
-                        <div class="map-controls-row">
-                            <!-- Existing Dropdown -->
-                            <div class="custom-select" style="flex: 1; min-width: 0; max-width: 250px;" data-id="potMapSelect">
-                                <div class="select-selected"><span>Shinobi Village</span><div class="select-arrow"></div></div>
-                                <div class="select-items select-hide" id="potMapOptions"></div>
-                            </div>
-                            
-                            <!-- NEW BUTTON -->
-                            <button id="btnMaxAll" class="max-btn">⚡ Max All</button>
-                        </div>
-                    </div>
+                    <div class="input-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+    <label>Map Selection</label>
+    <div class="input-row">
+        <!-- The Dropdown (Uses full-width class to fill space) -->
+        <div class="custom-select full-width" data-id="potMapSelect">
+            <div class="select-selected"><span>Shinobi Village</span><div class="select-arrow"></div></div>
+            <div class="select-items select-hide" id="potMapOptions"></div>
+        </div>
+        
+        <!-- The Button (Sits next to it, matching height) -->
+        <button id="btnMaxAll" class="max-btn">⚡ Max All</button>
+    </div>
+</div>
 
                     <!-- 3. Dynamic Map Sections (Appears underneath selector) -->
                     
