@@ -1667,7 +1667,7 @@
             inp.addEventListener('keydown', e => { if(e.key==='Enter') { e.preventDefault(); h(); inp.blur(); }});
         }
 
-        function setupCustomSelect(sel) {
+function setupCustomSelect(sel) {
             const selected = sel.querySelector('.select-selected');
             const items = sel.querySelector('.select-items');
             
@@ -1676,6 +1676,24 @@
                 closeAllSelects(selected); 
                 items.classList.toggle('select-hide'); 
                 selected.classList.toggle('select-arrow-active'); 
+
+                // --- SMART POSITIONING LOGIC ---
+                if (!items.classList.contains('select-hide')) {
+                    // 1. Reset position to default (down) to measure correctly
+                    items.classList.remove('select-up');
+
+                    // 2. Measure position
+                    const rect = items.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight;
+
+                    // 3. If bottom of dropdown goes past viewport bottom...
+                    if (rect.bottom > viewportHeight) {
+                        // ...and there is enough space above
+                        if (rect.top > rect.height) {
+                            items.classList.add('select-up');
+                        }
+                    }
+                }
             });
             
             items.addEventListener('click', e => {
@@ -1694,15 +1712,15 @@
                 opt.classList.add('same-as-selected');
                 items.classList.add('select-hide');
                 selected.classList.remove('select-arrow-active');
+                items.classList.remove('select-up'); // Reset position on selection
         
                 const id = sel.getAttribute('data-id');
                 if (id === 'mapSelect') updateMobDropdown(opt.getAttribute('data-value'));
                 if (id === 'currentRankSelect' || id === 'targetRankSelect') handleRankLogic(id, parseInt(opt.getAttribute('data-value')));
                 if (id === 'potRankSelect') span.textContent = `Rank ${opt.getAttribute('data-value')}`;
                 
-                // Map Visibility Toggle logic
                 if (id === 'potMapSelect') {
-                    const mapKey = opt.getAttribute('data-value'); // e.g. "ShinobiVillage"
+                    const mapKey = opt.getAttribute('data-value'); 
                     document.querySelectorAll('.map-section').forEach(sec => sec.classList.remove('active'));
                     const targetSec = document.getElementById(`map-${mapKey}`);
                     if(targetSec) targetSec.classList.add('active');
@@ -1765,7 +1783,12 @@
         function closeAllSelects(ex) {
             document.querySelectorAll('.custom-select').forEach(s => {
                 const sl = s.querySelector('.select-selected');
-                if (sl !== ex) { s.querySelector('.select-items').classList.add('select-hide'); sl.classList.remove('select-arrow-active'); }
+                const items = s.querySelector('.select-items');
+                if (sl !== ex) { 
+                    items.classList.add('select-hide'); 
+                    sl.classList.remove('select-arrow-active'); 
+                    items.classList.remove('select-up'); // Clean up direction
+                }
             });
         }
     </script>
