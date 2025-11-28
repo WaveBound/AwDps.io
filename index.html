@@ -839,7 +839,7 @@
                             </div>
                         </div>
 
-                        <!-- Row 2: Speed Buttons + NEW Passive Input -->
+                        <!-- Row 2: Speed Buttons + NEW Hero Input -->
                         <div class="input-row-multi">
                             <div class="input-col">
                                 <div class="input-group">
@@ -853,7 +853,7 @@
                             <div class="input-col">
                                 <div class="input-group">
                                     <label>Hero % <span style="font-size:9px; opacity:0.7;">(Hits every 0.5s)</span></label>
-                                    <input id="passiveDmgInput" placeholder="0" type="number" min="0" class="numeric-input" style="text-align: center;" />
+                                    <input id="heroDmgInput" placeholder="0" type="number" min="0" class="numeric-input" style="text-align: center;" />
                                 </div>
                             </div>
                         </div>
@@ -1058,7 +1058,7 @@
             // Damage Tab
             dmgDmg: document.getElementById('damageDmgInput'),
             crit: document.getElementById('critInput'),
-            dmgPassive: document.getElementById('passiveDmgInput'),
+            dmgHero: document.getElementById('heroDmgInput'), // CHANGED
             mobHp: document.getElementById('mobHpResultBox'),
             dpsRes: document.getElementById('dmgPerSecResult'),
             mpmRes: document.getElementById('mobsPerMinuteResult'),
@@ -1134,7 +1134,7 @@
             setupMultiplierToggle('pot2xBtn', 'potNo2xBtn', 'potentialMult', updatePotential);
 
             // Bind Input Events
-            const inputs = [dom.dmg, dom.masCur, dom.dInput, dom.hInput, dom.mInput, dom.dmgDmg, dom.crit, dom.dmgPassive, dom.dropAmt, dom.dropMul, dom.dropChn, dom.rankMpc, dom.rankCur];
+            const inputs = [dom.dmg, dom.masCur, dom.dInput, dom.hInput, dom.mInput, dom.dmgDmg, dom.crit, dom.dmgHero, dom.dropAmt, dom.dropMul, dom.dropChn, dom.rankMpc, dom.rankCur];
             inputs.forEach(el => el.addEventListener('input', updateAll));
 
             // Setup Smart Inputs
@@ -1430,7 +1430,7 @@
             // 1. Get Inputs
             const baseDmg = parseInput(dom.dmgDmg, 'damageSuffixSelect');
             const critPercent = parseFloat(dom.crit.value) || 0;
-            const passivePercent = parseFloat(dom.dmgPassive.value) || 0;
+            const heroPercent = parseFloat(dom.dmgHero.value) || 0;
             
             // 2. Mob Data
             const mobSel = document.querySelector('[data-id="mobSelect"]');
@@ -1446,14 +1446,14 @@
             const cpsScaled = BigInt(Math.round(state.damageCps * 100)); 
             const numeratorClick = baseDmg * cpsScaled * multiplierScaled;
 
-            // 4. Calculate Passive DPS
+            // 4. Calculate Hero DPS
             // Logic: It hits every 0.5s = 2 hits per second.
             // Formula: Base * (Percent / 100) * 2
             // Scaled to match numeratorClick (100,000 scale): Base * Percent * 2000
-            const numeratorPassive = baseDmg * BigInt(Math.round(passivePercent * 2000));
+            const numeratorHero = baseDmg * BigInt(Math.round(heroPercent * 2000));
 
             // 5. Total DPS
-            const totalNumerator = numeratorClick + numeratorPassive;
+            const totalNumerator = numeratorClick + numeratorHero;
             
             // --- DISPLAY RESULTS ---
             if (baseDmg > 0n) {
