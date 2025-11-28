@@ -11,7 +11,7 @@ const rankCostsData = [
      "6.25T", "52.47T", "440.75T", "3.7Qa", "31.1Qa", "261.23Qa", "2.19Qi", "18.43Qi", "154.83Qi",
      "1.30Sx", "10.93Sx", "91.77Sx", "770.88Sx", "6.48Sp", "54.29Sp", "456.90Sp", "3.84Oc", "32.24Oc",
      "270.81Oc", "2.27No", "19.11No", "160.51No", "1.35Dc", "11.33Dc", "95.13Dc", "799.13Dc", "6.71Ud",
-     "56.39Ud", "473.65Ud", "3.98Dd", "33.42Dd", "280.73Dd", "2.36Td", "19.81Td", "166.39Td", "1.40Qad"
+     "56.39Ud", "473.65Ud", "3.98Dd", "131.33Dd", "1.14Td", "9.94Td", "???", "???", "???"
 ];
 
 const bijuuData = [
@@ -271,8 +271,8 @@ const gameData = {
         { name: "Blind", hp: "100Dd" }, { name: "Colosso", hp: "5Td" } , { name: "Elen yage", hp: "200Qid" } 
     ],
     "Shadow City": [
-        { name: "Shadow Soldier", hp: "500Qid" }, { name: "Gate Keeper", hp: "5Sxd" }, { name: "Sung", hp: "80Spd" }, 
-        { name: "Igris", hp: "4Ocd" }, { name: "Beru", hp: "10Vg" }, { name: "Ashborn", hp: "500Vg" }
+        { name: "TangFak", hp: "8Td" }, { name: "Sunly", hp: "400Qad" }, { name: "Haler", hp: "20Qid" }, 
+        { name: "Thomas", hp: "2Sxd" }, { name: "Frieze", hp: "50Spd" }, { name: "???", hp: "???" }
     ]
 };
 
