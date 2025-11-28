@@ -203,16 +203,7 @@
         border: 1px solid var(--primary-border); border-radius: var(--border-radius-sm); 
         cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s ease; overflow: hidden; 
       }
-.select-selected span { 
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; /* Adds ... if it still doesn't fit */
-    display: block; 
-    margin-right: 10px; 
-    line-height: 1.2; 
-    flex: 1;       /* Takes up remaining space */
-    min-width: 0;  /* CRITICAL: Prevents flex item from forcing container width */
-}
+      .select-selected span { white-space: nowrap; overflow: hidden; text-overflow: clip; display: block; margin-right: 10px; line-height: 1.2; width: 100%; }
       .select-selected:hover, .select-selected.select-arrow-active { border-color: var(--primary-light); background-color: #202023; }
       .select-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-muted); transition: transform 0.2s ease; flex-shrink: 0; }
       .select-selected.select-arrow-active .select-arrow { transform: rotate(180deg); border-top-color: var(--primary-light); }
@@ -366,17 +357,22 @@
       #achievementsPanel .input-group { margin-bottom: 15px; }
       #achievementsPanel .select-selected { height: 35px; font-size: 13px; }
       
-      @media (max-width: 768px) {
-        .mastery-layout { grid-template-columns: 1fr; gap: 25px; }
-        .tab-content { padding: 25px; }
-        .input-row-multi { flex-direction: column; gap: 20px; }
-        .potential-grid, .map-section { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .potential-grid.global-grid { grid-template-columns: repeat(2, 1fr); } 
-        .result-grid { grid-template-columns: 1fr; }
-        .result-box.highlight { grid-column: auto; margin-top: 0; height: auto; padding: 20px; min-height: 115px; }
-        .result-box.highlight .value { font-size: 24px; white-space: normal; }
-        .input-group label { font-size: 11px; }
-      }
+@media (max-width: 768px) {
+  .mastery-layout { grid-template-columns: 1fr; gap: 25px; }
+  .tab-content { padding: 25px; }
+  .input-row-multi { flex-direction: column; gap: 20px; }
+  
+  /* Keep generic potential grids at 2 columns if they fit, or switch them to 1fr as well if they are tight */
+  .potential-grid, .map-section { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+  
+  /* FIX: Change global-grid to 1fr so Yen/Raid stack vertically and don't get cut off */
+  .potential-grid.global-grid { grid-template-columns: 1fr; } 
+
+  .result-grid { grid-template-columns: 1fr; }
+  .result-box.highlight { grid-column: auto; margin-top: 0; height: auto; padding: 20px; min-height: 115px; }
+  .result-box.highlight .value { font-size: 24px; white-space: normal; }
+  .input-group label { font-size: 11px; }
+}
     </style>
 </head>
 <body>
@@ -1377,49 +1373,32 @@
             r.setProperty('--primary-glow', t.glow);
         }
 
-document.querySelectorAll('.tab-button').forEach(b => {
-    b.addEventListener('click', () => {
-        document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
-        b.classList.add('active');
-        const tab = b.dataset.tab;
-        
-        // 1. Activate content
-        const activeContent = document.getElementById(tab + '-content');
-        activeContent.classList.add('active');
-        
-        setTheme(tab);
-        
-        // Panel Logic
-        dom.panel.classList.toggle('active', tab === 'damage'); 
-        
-        if (tab !== 'mastery') {
-            dom.unitsPanel.classList.remove('active');
-            dom.statsPanel.classList.remove('active');
-            dom.achievementsPanel.classList.remove('active');
-        } else if (state.isPotentialOpen) {
-            dom.unitsPanel.classList.add('active');
-            dom.statsPanel.classList.add('active');
-            dom.achievementsPanel.classList.add('active');
-            dom.panel.classList.remove('active');
-        }
-
-        // --- NEW CODE: Fix text size when tab becomes visible ---
-        // We wait 10ms to let the CSS transition/display change apply so clientWidth is not 0
-        setTimeout(() => {
-            activeContent.querySelectorAll('.custom-select').forEach(el => {
-                fitTextToContainer(el.querySelector('.select-selected span'));
+        document.querySelectorAll('.tab-button').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+                b.classList.add('active');
+                const tab = b.dataset.tab;
+                document.getElementById(tab + '-content').classList.add('active');
+                setTheme(tab);
+                
+                // Panel Logic
+                dom.panel.classList.toggle('active', tab === 'damage'); // Show Drops on Damage
+                
+                // If exiting Mastery Potential view by clicking tabs
+                if (tab !== 'mastery') {
+                    // Hide Potential Panels
+                    dom.unitsPanel.classList.remove('active');
+                    dom.statsPanel.classList.remove('active');
+                    dom.achievementsPanel.classList.remove('active');
+                } else if (state.isPotentialOpen) {
+                    // If returning to Mastery and it was open
+                    dom.unitsPanel.classList.add('active');
+                    dom.statsPanel.classList.add('active');
+                    dom.achievementsPanel.classList.add('active');
+                    dom.panel.classList.remove('active');
+                }
             });
-            // Also resize side panels if they are active
-            if(dom.unitsPanel.classList.contains('active')) {
-                dom.unitsPanel.querySelectorAll('.custom-select').forEach(el => fitTextToContainer(el.querySelector('.select-selected span')));
-            }
-            if(dom.achievementsPanel.classList.contains('active')) {
-                dom.achievementsPanel.querySelectorAll('.custom-select').forEach(el => fitTextToContainer(el.querySelector('.select-selected span')));
-            }
-        }, 10);
-        // -------------------------------------------------------
-    });
-});
+        });
 
         function initSuffixDropdowns() {
             const ids = ['suffixSelect', 'currentMasterySuffixSelect', 'damageSuffixSelect', 'rankMpcSuffix', 'rankCurrentMasterySuffix'];
@@ -1733,28 +1712,18 @@ document.querySelectorAll('.tab-button').forEach(b => {
             });
         }
 
-function fitTextToContainer(span) {
-    if (!span) return;
-    
-    // Reset to default size to calculate correctly
-    let size = 16; // Default font size
-    span.style.fontSize = size + 'px';
-    
-    const parent = span.parentElement;
-    // If parent is hidden or collapsed, stop to prevent errors
-    if (!parent || parent.clientWidth === 0) return; 
-
-    // Calculate available space (Parent width - padding - arrow width)
-    const arrowWidth = 20; 
-    const padding = 35; 
-    const maxWidth = parent.clientWidth - padding - arrowWidth;
-
-    // Loop to shrink text
-    while (span.scrollWidth > maxWidth && size > 9) {
-        size--;
-        span.style.fontSize = size + 'px';
-    }
-}
+        function fitTextToContainer(span) {
+            if(!span) return;
+            let size = 16;
+            span.style.fontSize = size + 'px';
+            const parent = span.parentElement;
+            if(!parent || parent.clientWidth === 0) return; 
+            const maxWidth = parent.clientWidth - 45; 
+            while (span.scrollWidth > maxWidth && size > 9) {
+                size--;
+                span.style.fontSize = size + 'px';
+            }
+        }
 
         function updateMobDropdown(map) {
             const sel = document.querySelector('[data-id="mobSelect"]');
