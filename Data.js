@@ -91,9 +91,9 @@ const dungeonData = [
 ];
 
 const shadowsData = [
-    { name: "None (+0%)", val: 100 }, { name: "Tenk (+50%)", val: 150 }, { name: "Greed (+100%)", val: 200 },
-    { name: "Eron (+200%)", val: 300 }, { name: "Keisal (+300%)", val: 400 }, { name: "Berrion (+400%)", val: 500 },
-    { name: "Igris (+600%)", val: 700 }
+    { name: "None (+0%)", val: 100 }, { name: "Soldier (+50%)", val: 150 }, { name: "General (+100%)", val: 200 },
+    { name: "Captain (+200%)", val: 300 }, { name: "Commander (+300%)", val: 400 }, { name: "Lord (+500%)", val: 600 },
+    { name: "Monarch (+1000%)", val: 1100 }
 ];
 
 const shadowGateData = [
