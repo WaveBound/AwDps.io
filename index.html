@@ -71,6 +71,7 @@
           z-index: 1; pointer-events: none;
       }
 
+      /* Specific classes for desktop positioning */
       .side-column.left-aligned { right: 100%; margin-right: 20px; align-items: flex-end; }
       .side-column.right-aligned { left: 100%; margin-left: 20px; align-items: flex-start; }
 
@@ -94,15 +95,22 @@
       
       /* --- UPDATED MEDIA QUERY --- */
       @media (max-width: 1650px) {
+          /* Generic reset */
           .side-column { 
-              position: relative; left: auto; right: auto; top: auto; transform: none !important;
-              margin: 20px auto 0; width: 100%; max-width: 600px; 
+              position: relative; 
+              top: auto; 
+              transform: none !important;
+              margin: 20px auto 0; 
+              width: 100%; 
+              max-width: 600px; 
               align-items: stretch !important;
           }
 
-          /* FIX: Explicitly reset specific side margins so 'auto' works */
+          /* CRITICAL FIX: Target specific classes to override desktop 'left', 'right', and 'margins' */
           .side-column.left-aligned, 
           .side-column.right-aligned {
+              left: auto;
+              right: auto;
               margin-left: auto;
               margin-right: auto;
           }
