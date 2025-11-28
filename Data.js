@@ -30,7 +30,8 @@ const titlesData = [
     { name: "None (+0%)", val: 100 }, { name: "Apprentice (+50%)", val: 150 }, { name: "Adept (+100%)", val: 200 },
     { name: "Elementalist (+150%)", val: 250 }, { name: "Commander (+200%)", val: 300 }, { name: "Heroic Leader (+300%)", val: 400 },
     { name: "Shadow Emperor (+400%)", val: 500 }, { name: "Divine Guardian (+500%)", val: 600 }, { name: "Soul Reaper (+600%)", val: 700 },
-    { name: "Eternal warlord (+700%)", val: 800 }, { name: "Ascending Legends (+800%)", val: 900 }, { name: "Titan Hunter (+900%)", val: 1000 }
+    { name: "Eternal warlord (+700%)", val: 800 }, { name: "Ascending Legends (+800%)", val: 900 }, { name: "Titan Hunter (+900%)", val: 1000 },
+    { name: "Shadow Monarch (+1000%)", val: 1100 }
 ];
 
 const raceData = [
@@ -89,14 +90,163 @@ const dungeonData = [
     { name: "Ervim (+200%)", val: 300 }, { name: "Armon (+300%)", val: 400 }, { name: "Eron (+1000%)", val: 1100 }
 ];
 
-const achievementOptions = [
+const shadowsData = [
+    { name: "None (+0%)", val: 100 }, { name: "Tenk (+50%)", val: 150 }, { name: "Greed (+100%)", val: 200 },
+    { name: "Eron (+200%)", val: 300 }, { name: "Keisal (+300%)", val: 400 }, { name: "Berrion (+400%)", val: 500 },
+    { name: "Igris (+600%)", val: 700 }
+];
+
+const shadowGateData = [
     { name: "None (+0%)", val: 100 }, 
-    { name: "World 1 (+25%)", val: 125 }, 
-    { name: "World 2 (+50%)", val: 150 },
-    { name: "World 3 (+75%)", val: 175 },
-    { name: "World 4 (+100%)", val: 200 },
-    { name: "World 5 (+125%)", val: 225 },
-    { name: "World 6 (+150%)", val: 250 }
+    { name: "Yoo Jen-Hu (+50%)", val: 150 },
+    { name: "Baek Yuon-ho (+100%)", val: 200 },
+    { name: "Chui Jung-in (+200%)", val: 300 },
+    { name: "Cha Hea-en (+400%)", val: 500 },
+    { name: "Soung Jon-Woo (+1000%)", val: 1100 }
+];
+
+const achievementsData = [
+    // 1. Secret Boss
+    {
+        title: "Secret Boss (Multiplier)",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "World 1 (+25%)", val: 125 },
+            { name: "World 2 (+50%)", val: 150 },
+            { name: "World 3 (+75%)", val: 175 },
+            { name: "World 4 (+100%)", val: 200 },
+            { name: "World 5 (+125%)", val: 225 },
+            { name: "World 6 (+150%)", val: 250 }
+        ]
+    },
+    // 2. Mastery
+    {
+        title: "Mastery",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "500K Mastery (+5%)", val: 105 },
+            { name: "500M Mastery (+10%)", val: 110 },
+            { name: "500B Mastery (+15%)", val: 115 },
+            { name: "5Qi Mastery (+20%)", val: 120 },
+            { name: "50Sx Mastery (+25%)", val: 125 },
+            { name: "50Sp Mastery (+30%)", val: 130 },
+            { name: "100Sp Mastery (+35%)", val: 135 },
+            { name: "600Sp Mastery (+40%)", val: 140 },
+            { name: "4Oc Mastery (+45%)", val: 145 },
+            { name: "50Oc Mastery (+50%)", val: 150 },
+            { name: "200Oc Mastery (+55%)", val: 155 },
+            { name: "4No Mastery (+60%)", val: 160 },
+            { name: "40No Mastery (+65%)", val: 165 },
+            { name: "600No Mastery (+70%)", val: 170 },
+            { name: "2Dc Mastery (+75%)", val: 175 }
+        ]
+    },
+    // 3. Master Slayer
+    {
+        title: "Master Slayer",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "1K Kills! (+5%)", val: 105 },
+            { name: "10k Kills! (+10%)", val: 110 },
+            { name: "100k Kills! (+15%)", val: 115 },
+            { name: "1M Kills! (+20%)", val: 120 },
+            { name: "10M Kills! (+25%)", val: 125 },
+            { name: "100M Kills! (+30%)", val: 130 }
+        ]
+    },
+    // 4
+    {
+        title: "Easy Dungeon",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "Room 5! (+5%)", val: 105 },
+            { name: "Room 15! (+10%)", val: 110 },
+            { name: "Room 30! (+15%)", val: 115 },
+            { name: "Room 40! (+20%)", val: 120 },
+            { name: "Complete 25 times! (+25%)", val: 125 }
+        ]
+    },
+    // 5
+    {
+        title: "Medium Dungeon",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "Room 5! (+5%)", val: 105 },
+            { name: "Room 15! (+10%)", val: 110 },
+            { name: "Room 30! (+15%)", val: 115 },
+            { name: "Room 40! (+20%)", val: 120 },
+            { name: "Room 50! (+25%)", val: 125 },
+            { name: "Complete 25 times! (+30%)", val: 130 }
+        ]
+    },
+    // 6
+    {
+        title: "Hard Dungeon",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "Room 5! (+5%)", val: 105 },
+            { name: "Room 15! (+10%)", val: 110 },
+            { name: "Room 30! (+15%)", val: 115 },
+            { name: "Room 40! (+20%)", val: 120 },
+            { name: "Room 50! (+25%)", val: 125 },
+            { name: "Complete 25 times! (+30%)", val: 130 }
+        ]
+    },
+    // 7
+    {
+        title: "Shinobi Raid",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "Wave 25! (+10%)", val: 110 },
+            { name: "Wave 50! (+20%)", val: 120 },
+            { name: "Wave 125! (+30%)", val: 130 },
+            { name: "Wave 175! (+40%)", val: 140 },
+            { name: "Wave 200! (+50%)", val: 150 },
+            { name: "Wave 250! (+60%)", val: 160 },
+            { name: "Wave 275! (+70%)", val: 170 },
+            { name: "Wave 325! (+80%)", val: 180 },
+            { name: "Wave 350! (+90%)", val: 190 },
+            { name: "Wave 400! (+100%)", val: 200 },
+            { name: "Wave 425! (+110%)", val: 210 }
+        ]
+    },
+    // 8
+    {
+        title: "Defense",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "Wave 10! (+5%)", val: 105 },
+            { name: "Wave 20! (+10%)", val: 110 },
+            { name: "Wave 40! (+15%)", val: 115 },
+            { name: "Wave 50! (+20%)", val: 120 },
+            { name: "Wave 60! (+25%)", val: 125 },
+            { name: "Wave 90! (+30%)", val: 130 },
+            { name: "Wave 100! (+35%)", val: 135 },
+            { name: "Wave 130! (+40%)", val: 140 },
+            { name: "Wave 150! (+45%)", val: 145 },
+            { name: "Wave 160! (+50%)", val: 150 }
+        ]
+    },
+    // 9
+    {
+        title: "Shadow Gate",
+        options: [
+            { name: "None (+0%)", val: 100 },
+            { name: "Wave 10! (+10%)", val: 110 },
+            { name: "Wave 25! (+20%)", val: 120 },
+            { name: "Wave 75! (+30%)", val: 130 },
+            { name: "Wave 100! (+40%)", val: 140 },
+            { name: "Wave 125! (+50%)", val: 150 },
+            { name: "Wave 175! (+60%)", val: 160 },
+            { name: "Wave 225! (+70%)", val: 170 },
+            { name: "Wave 275! (+80%)", val: 180 },
+            { name: "Wave 325! (+90%)", val: 190 },
+            { name: "Wave 375! (+100%)", val: 200 },
+            { name: "Wave 400! (+110%)", val: 210 },
+            { name: "Wave 450! (+120%)", val: 220 },
+            { name: "Wave 475! (+130%)", val: 230 }
+        ]
+    }
 ];
 
 const gameData = {
@@ -119,6 +269,10 @@ const gameData = {
     "Paradis": [ 
         { name: "Richala", hp: "700Dc" }, { name: "Famale Titan", hp: "80Ud" }, { name: "Mandile", hp: "5.5Dd" }, 
         { name: "Blind", hp: "100Dd" }, { name: "Colosso", hp: "5Td" } , { name: "Elen yage", hp: "200Qid" } 
+    ],
+    "Shadow City": [
+        { name: "Shadow Soldier", hp: "500Qid" }, { name: "Gate Keeper", hp: "5Sxd" }, { name: "Sung", hp: "80Spd" }, 
+        { name: "Igris", hp: "4Ocd" }, { name: "Beru", hp: "10Vg" }, { name: "Ashborn", hp: "500Vg" }
     ]
 };
 
