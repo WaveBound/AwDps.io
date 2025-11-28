@@ -420,8 +420,12 @@
       #achievementsContainer::-webkit-scrollbar-track { background: transparent; }
       #achievementsContainer::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px; }
       #achievementsContainer::-webkit-scrollbar-thumb:hover { background-color: var(--primary-border); }
-      
+.map-center-limit {
+    width: 25%; /* Desktop: Takes up half the container */
+}
+  
 @media (max-width: 768px) {
+  .map-center-limit {width: 100%; }
   .mastery-layout { grid-template-columns: 1fr; gap: 25px; }
   .tab-content { padding: 25px; }
   .input-row-multi { flex-direction: column; gap: 20px; }
@@ -632,18 +636,20 @@
                         </div>
                     </div>
 
-                    <!-- 2. Centered Map Selector -->
-                    <div class="input-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-    <label>Map Selection</label>
-    <div class="input-row">
-        <!-- The Dropdown (Uses full-width class to fill space) -->
-        <div class="custom-select full-width" data-id="potMapSelect">
+<!-- 2. Centered Map Selector -->
+<div class="input-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+    <!-- ROW TOP: Label + Max Button -->
+    <label style="justify-content: center; gap: 15px; margin-bottom: 12px;">
+        <span style="font-size: 14px; color: var(--primary-light); text-transform: uppercase; letter-spacing: 0.1em;">Map Selection</span>
+        <button id="btnMaxAll" class="max-btn" style="height: 24px; font-size: 10px; padding: 0 10px;">⚡ Max All</button>
+    </label>
+
+    <!-- INPUT ROW: Dropdown Only (Centered) -->
+    <div class="input-row" style="justify-content: center;">
+        <div class="custom-select map-center-limit" data-id="potMapSelect">
             <div class="select-selected"><span>Shinobi Village</span><div class="select-arrow"></div></div>
             <div class="select-items select-hide" id="potMapOptions"></div>
         </div>
-        
-        <!-- The Button (Sits next to it, matching height) -->
-        <button id="btnMaxAll" class="max-btn">⚡ Max All</button>
     </div>
 </div>
 
