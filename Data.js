@@ -51,8 +51,8 @@ const rankCostsData = [
     "2.84Td",     // Rank 41
     "25.24Td",    // Rank 42
     "224.65Td",   // Rank 43
-    "2Qad",       // Rank 44
-    "17.79Qad",   // Rank 45
+    "752.4Td",       // Rank 44
+    "6.55Qad",   // Rank 45
     "142.3Qad",   // Rank 46
     "1.14Qid",    // Rank 47
     "9.12Qid",    // Rank 48
