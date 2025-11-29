@@ -276,6 +276,15 @@ const gameData = {
     ]
 };
 
+const eggData = [
+    { name: "Shinobi Village", cost: "25", currency: "Yen" },
+    { name: "Namek Planet", cost: "500", currency: "Yen" },
+    { name: "Desert Land", cost: "5k", currency: "Yen" },
+    { name: "Demon Land", cost: "500k", currency: "Yen" },
+    { name: "Paradis", cost: "500m", currency: "Yen" },
+    { name: "Shadow City", cost: "50b", currency: "Yen" }
+];
+
 const themes = {
     rank: { primary: '#3b82f6', light: '#60a5fa', border: '#3b82f6', dim: 'rgba(59, 130, 246, 0.15)', glow: 'rgba(59, 130, 246, 0.5)' },
     mastery: { primary: '#ffffff', light: '#bf00ff', border: '#8700bd', dim: 'rgba(135, 0, 189, 0.3)', glow: 'rgba(163, 0, 222, 0.5)' },

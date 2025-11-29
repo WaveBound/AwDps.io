@@ -808,8 +808,8 @@
                                 <div class="input-group">
                                     <label>Gamepass Selection</label>
                                     <div class="mode-toggle">
-                                        <button id="gachaFastBtn" class="mode-btn active">Fast Open <span class="small">+40% Speed</span></button>
-                                        <button id="gachaNormalBtn" class="mode-btn">No GP <span class="small">Normal</span></button>
+                                        <button id="gachaFastBtn" class="mode-btn active">Fast Open <span class="small">1.2s Per Open</span></button>
+                                        <button id="gachaNormalBtn" class="mode-btn">No GP <span class="small">2s Per Open</span></button>
                                     </div>
                                 </div>
                             </div>
@@ -996,17 +996,7 @@
         const suffixes = { "none": 0 }; 
         suffixList.forEach((k, i) => suffixes[suffixMap[k]] = i + 1);
 
-        // --- Simulated Data for Egg Costs (Since Data.js is external) ---
-        const eggData = [
-            { name: "Shinobi Village", cost: 50, currency: "Yen" },
-            { name: "Namek Planet", cost: 250, currency: "Yen" },
-            { name: "Desert Land", cost: 1250, currency: "Yen" },
-            { name: "Demon Land", cost: 7500, currency: "Yen" },
-            { name: "Paradis", cost: 45000, currency: "Yen" },
-            { name: "Shadow City", cost: 250000, currency: "Yen" },
-            { name: "Walled City", cost: 1500000, currency: "Yen" },
-            { name: "Dragon World", cost: 8000000, currency: "Yen" }
-        ];
+        // NOTE: eggData is now loaded from Data.js
 
         document.addEventListener('DOMContentLoaded', () => {
             const inputsToClear = [ dom.itemAccessory, dom.playerStats, dom.playerAura, dom.playerAvatar ];
@@ -1171,7 +1161,6 @@
             const eyeBase = parseFloat(eyeSel.getAttribute('data-value')) || 0;
             let eyeLvl = parseInt(dom.potEyeLvl.value); if (eyeLvl > 50) { eyeLvl = 50; dom.potEyeLvl.value = 50; } if (isNaN(eyeLvl) || eyeLvl < 0) eyeLvl = 0;
             let eyePercentBonus = eyeBase + (eyeBase * 0.1 * eyeLvl);
-            // FIX: Round 1098% to 1100% at Level 50
             if (Math.round(eyePercentBonus) === 1098 && eyeLvl === 50) eyePercentBonus = 1100;
             
             const eyeFactor = BigInt(Math.round(100 + eyePercentBonus));
@@ -1186,7 +1175,6 @@
             const daBase = parseFloat(daSel.getAttribute('data-value')) || 0;
             let daLvl = parseInt(dom.potDemonArtLvl.value); if (daLvl > 50) { daLvl = 50; dom.potDemonArtLvl.value = 50; } if (isNaN(daLvl) || daLvl < 0) daLvl = 0;
             let daPercentBonus = daBase + (daBase * 0.1 * daLvl);
-            // FIX: Round 1098% to 1100% at Level 50
             if (Math.round(daPercentBonus) === 1098 && daLvl === 50) daPercentBonus = 1100;
 
             const daFactor = BigInt(Math.round(100 + daPercentBonus));
@@ -1208,13 +1196,11 @@
             dom.potRes.innerHTML = (result > 0n) ? formatNumber(result) : "0";
         }
 
-function updateDamage() {
-            // 1. Get Inputs
+        function updateDamage() {
             const baseDmg = parseInput(dom.dmgDmg, 'damageSuffixSelect');
             const critPercent = parseFloat(dom.crit.value) || 0;
             const heroPercent = parseFloat(dom.dmgHero.value) || 0;
             
-            // 2. Mob Data
             const mobSel = document.querySelector('[data-id="mobSelect"]');
             const hpString = mobSel.getAttribute('data-hp');
             const mobHp = parseSuffixedString(hpString);
@@ -1222,99 +1208,50 @@ function updateDamage() {
             dom.mobHp.textContent = hpString || "--";
             const mobCountVal = parseInt(document.querySelector('[data-id="mobCountSelect"]').getAttribute('data-value')) || 1;
 
-            // 3. Calculate Total DPS (Always calculate this first)
             const multiplierScaled = BigInt(Math.round(1000 + (critPercent * 5))); 
             const cpsScaled = BigInt(Math.round(state.damageCps * 100)); 
             
-            // Click DPS: Base * CPS * CritMultiplier
             const numeratorClick = baseDmg * cpsScaled * multiplierScaled;
-            
-            // Hero DPS: Base * Hero% * 2 (hits per sec) -> Scaled to match numeratorClick (100,000)
             const numeratorHero = baseDmg * BigInt(Math.round(heroPercent * 2000));
+            const totalNumerator = numeratorClick + numeratorHero; 
 
-            const totalNumerator = numeratorClick + numeratorHero; // Scaled by 100,000
-
-            // 4. Display DPS immediately
             if (baseDmg > 0n) {
                  dom.dpsRes.innerHTML = formatNumber(totalNumerator / 100000n);
             } else {
-                 dom.dpsRes.innerHTML = "--";
-                 dom.mpmRes.innerHTML = "--";
-                 dom.mphRes.innerHTML = "--";
-                 dom.ttkRes.innerHTML = "0s";
-                 dom.dropMin.innerHTML = "--";
-                 dom.dropHr.innerHTML = "--";
-                 return;
+                 dom.dpsRes.innerHTML = "--"; dom.mpmRes.innerHTML = "--"; dom.mphRes.innerHTML = "--"; dom.ttkRes.innerHTML = "0s"; dom.dropMin.innerHTML = "--"; dom.dropHr.innerHTML = "--"; return;
             }
 
-            // 5. Check Mob Status
             if (mobHp <= 0n) {
-                dom.ttkRes.innerHTML = "Select Mob";
-                dom.mpmRes.innerHTML = "--";
-                dom.mphRes.innerHTML = "--";
-                dom.dropMin.innerHTML = "--";
-                dom.dropHr.innerHTML = "--";
-                return;
+                dom.ttkRes.innerHTML = "Select Mob"; dom.mpmRes.innerHTML = "--"; dom.mphRes.innerHTML = "--"; dom.dropMin.innerHTML = "--"; dom.dropHr.innerHTML = "--"; return;
             }
 
-            // 6. Calculate Time To Kill
             let timeSeconds = 0;
+            const oneHitDmgScaled = baseDmg * multiplierScaled; 
+            const mobHpScaledForHit = mobHp * 1000n; 
 
-            // One-Tap Check: Compare Single Hit vs Mob HP
-            // Single Hit = Base * CritMultiplier
-            // We need to scale MobHP to match the multiplier scale (1000)
-            const oneHitDmgScaled = baseDmg * multiplierScaled; // Scale 1000
-            const mobHpScaledForHit = mobHp * 1000n; // Scale 1000
-
-            if (oneHitDmgScaled >= mobHpScaledForHit) {
-                // INSTANT KILL
-                timeSeconds = 0; 
-            } else {
-                // DPS KILL
-                if (totalNumerator === 0n) {
-                    dom.ttkRes.innerHTML = "Forever";
-                    dom.mpmRes.innerHTML = "0";
-                    dom.mphRes.innerHTML = "0";
-                    dom.dropMin.innerHTML = "0";
-                    dom.dropHr.innerHTML = "0";
-                    return;
-                }
-                // Calculate time: MobHP / TotalDPS
-                // MobHP needs to be scaled by 100,000 to match totalNumerator
+            if (oneHitDmgScaled >= mobHpScaledForHit) { timeSeconds = 0; } 
+            else {
+                if (totalNumerator === 0n) { dom.ttkRes.innerHTML = "Forever"; dom.mpmRes.innerHTML = "0"; dom.mphRes.innerHTML = "0"; dom.dropMin.innerHTML = "0"; dom.dropHr.innerHTML = "0"; return; }
                 const mobHpScaledForTime = mobHp * 100000n;
                 timeSeconds = Number(mobHpScaledForTime * 100n / totalNumerator) / 100;
             }
 
             dom.ttkRes.innerHTML = (timeSeconds < 60) ? timeSeconds.toFixed(2) + "s" : formatTime(timeSeconds);
 
-            // 7. Kills & Drops Logic
             const respawnTime = 2.0;
             const spawnsPerMinute = 60 / respawnTime; 
-            
             let killsPerMin = 0;
             
             if (mobCountVal === 1) {
-                // If killing 1 mob: Time = Kill Time + Respawn Time
                 const totalCycleTime = timeSeconds + respawnTime;
-                if (totalCycleTime > 0) {
-                    killsPerMin = 60 / totalCycleTime;
-                }
+                if (totalCycleTime > 0) killsPerMin = 60 / totalCycleTime;
             } else {
-                // If killing multiple mobs (AoE/farming logic)
-                let mobLimit = 0;
-                if (timeSeconds > 0) {
-                    mobLimit = respawnTime / timeSeconds;
-                } else {
-                    // If timeSeconds is 0 (Insta kill), limit is infinite relative to kill speed, 
-                    // essentially capped by how many mobs exist
-                    mobLimit = 999999;
-                }
+                let mobLimit = (timeSeconds > 0) ? (respawnTime / timeSeconds) : 999999;
                 const effectiveKillsPerWave = Math.min(mobCountVal, mobLimit);
                 killsPerMin = effectiveKillsPerWave * spawnsPerMinute;
             }
 
             const killsPerHour = killsPerMin * 60;
-            
             dom.mpmRes.innerHTML = killsPerMin.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
             dom.mphRes.innerHTML = killsPerHour.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
@@ -1357,45 +1294,58 @@ function updateDamage() {
             else dom.rankTime.innerHTML = "Infinite";
         }
         
-        function updateGacha() {
-            const TIME_BASE = 2.0; 
-            const TIME_FAST_FACTOR = 1.4; 
-            const SLOWDOWN_FACTOR = 1.5;  
+function updateGacha() {
+            // -- CONSTANTS --
+            const TIME_NORMAL = 2.0;    
+            const TIME_FAST = 1.2;      
+            const SLOW_DELAY = 1.0;     
 
+            // -- INPUTS --
             const batchSize = parseInt(dom.gachaAmt.value) || 1;
             const legChance = (parseFloat(dom.gachaLeg.value) || 0) / 100;
             const mythChance = (parseFloat(dom.gachaMyth.value) || 0) / 100;
-
-            const normalTimePerOpen = state.gachaFast ? (TIME_BASE / TIME_FAST_FACTOR) : TIME_BASE;
-
-            // Calculate Slowdown for the Average Speed Display
-            const pRare = legChance + mythChance;
-            const pAnyRareInBatch = 1 - Math.pow(1 - pRare, batchSize);
-            const batchBaseTime = normalTimePerOpen * batchSize;
-            const batchSlowTime = batchBaseTime * SLOWDOWN_FACTOR;
-            const averageBatchTime = (batchBaseTime * (1 - pAnyRareInBatch)) + (batchSlowTime * pAnyRareInBatch);
-
-            let realOpensPerSec = 0;
-            if (averageBatchTime > 0) realOpensPerSec = batchSize / averageBatchTime;
-
-            // Update Stats Results
-            dom.gachaSpd.innerHTML = realOpensPerSec.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
-            dom.gachaHr.innerHTML = formatNumber(BigInt(Math.round(realOpensPerSec * 3600)));
-
-            // Calculate Total Cost based on Duration and EXACT Speed (Opens = Speed * Time)
+            
             const days = parseInt(dom.gDay.value) || 0;
             const hours = parseInt(dom.gHour.value) || 0;
             const mins = parseInt(dom.gMin.value) || 0;
-            const totalSeconds = (days * 86400) + (hours * 3600) + (mins * 60);
 
             const eggSel = document.querySelector('[data-id="eggCostSelect"]');
-            const costPerEgg = parseInt(eggSel.getAttribute('data-cost')) || 0;
+            
+            // --- CHANGE 1: Use parseSuffixedString to handle "1.5m", "50", etc. ---
+            const costPerEgg = parseSuffixedString(eggSel.getAttribute('data-cost') || "0");
+            
             const currency = eggSel.getAttribute('data-curr') || "Yen";
 
-            // Calculation based on displayed average speed
-            const totalOpens = Math.floor(realOpensPerSec * totalSeconds);
-            const totalCost = BigInt(totalOpens) * BigInt(costPerEgg);
+            // -- CALCULATIONS --
+            
+            // 1. Time per Batch
+            const baseTimePerBatch = state.gachaFast ? TIME_FAST : TIME_NORMAL;
 
+            // 2. Probability of slowdown
+            const pRare = legChance + mythChance;
+            const pAnyRareInBatch = 1 - Math.pow(1 - pRare, batchSize);
+            
+            // 3. Average time per batch
+            const averageTimePerBatch = baseTimePerBatch + (pAnyRareInBatch * SLOW_DELAY);
+
+            // 4. Rate: Opens (Eggs) Per Second
+            let eggsPerSecond = 0;
+            if (averageTimePerBatch > 0) {
+                eggsPerSecond = batchSize / averageTimePerBatch;
+            }
+
+            // 5. Total Opens over Duration
+            const totalDurationSeconds = (days * 86400) + (hours * 3600) + (mins * 60);
+            const totalOpens = Math.floor(eggsPerSecond * totalDurationSeconds);
+
+            // 6. Total Cost
+            // --- CHANGE 2: Removed "* 100n" because parseSuffixedString already scales by 100 ---
+            const totalCost = BigInt(totalOpens) * costPerEgg;
+
+            // -- DISPLAY --
+            dom.gachaSpd.innerHTML = eggsPerSecond.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+            dom.gachaHr.innerHTML = Math.floor(eggsPerSecond * 3600).toLocaleString();
+            
             dom.gachaCostRes.innerHTML = formatNumber(totalCost);
             dom.gachaCostLabel.innerHTML = `Total ${currency} Cost`;
             dom.gachaOpensRes.innerHTML = totalOpens.toLocaleString();
@@ -1494,12 +1444,13 @@ function updateDamage() {
             Object.keys(gameData).forEach(k => mapSelect.innerHTML += `<div data-value="${k}">${k}</div>`);
         }
 
-        function initEggCostDropdown() {
+function initEggCostDropdown() {
             const el = document.getElementById('eggCostOptions');
             const parent = document.querySelector('[data-id="eggCostSelect"]');
             
             eggData.forEach((d, i) => {
-                const label = `${d.name} (${d.cost.toLocaleString()})`;
+                // --- CHANGE: Removed .toLocaleString(), just use d.cost directly ---
+                const label = `${d.name} (${d.cost})`;
                 el.innerHTML += `<div data-value="${d.name}" data-cost="${d.cost}" data-curr="${d.currency}" class="${i===0?'same-as-selected':''}">${label}</div>`;
             });
             
@@ -1508,7 +1459,8 @@ function updateDamage() {
                 parent.setAttribute('data-value', first.name);
                 parent.setAttribute('data-cost', first.cost);
                 parent.setAttribute('data-curr', first.currency);
-                parent.querySelector('span').textContent = `${first.name} (${first.cost.toLocaleString()})`;
+                // --- CHANGE: Update default label ---
+                parent.querySelector('span').textContent = `${first.name} (${first.cost})`;
             }
         }
 
