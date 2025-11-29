@@ -795,17 +795,38 @@
             <!-- GACHA CALCULATOR -->
             <div id="gacha-content" class="tab-content">
                 <div class="mastery-layout">
-                    <!-- Column 1: Speed & Amount -->
+                    <!-- Column 1: Speed, Amount, Gamepass -->
                     <div>
-                        <div class="input-group">
-                            <label for="gachaAmountInput">Open Amount (Batch Size)</label>
-                            <input id="gachaAmountInput" placeholder="1" value="1" type="number" class="numeric-input" />
+                        <div class="input-row-multi">
+                             <div class="input-col" style="flex: 1;">
+                                <div class="input-group">
+                                    <label for="gachaAmountInput">Batch Size</label>
+                                    <input id="gachaAmountInput" placeholder="1" value="1" type="number" class="numeric-input" />
+                                </div>
+                            </div>
+                             <div class="input-col" style="flex: 2;">
+                                <div class="input-group">
+                                    <label>Gamepass Selection</label>
+                                    <div class="mode-toggle">
+                                        <button id="gachaFastBtn" class="mode-btn active">Fast Open <span class="small">+40% Speed</span></button>
+                                        <button id="gachaNormalBtn" class="mode-btn">No GP <span class="small">Normal</span></button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="input-group">
-                            <label>Gamepass Selection</label>
-                            <div class="mode-toggle">
-                                <button id="gachaFastBtn" class="mode-btn active">Fast Open <span class="small">GP Active</span></button>
-                                <button id="gachaNormalBtn" class="mode-btn">No GP <span class="small">Normal</span></button>
+                            <label>Opening Duration (D:H:M)</label>
+                            <div class="time-input-group">
+                                <div><input id="gachaDayInput" type="number" value="0" min="0" class="numeric-input" /><div class="time-label">Days</div></div>
+                                <div><input id="gachaHourInput" type="number" value="0" min="0" class="numeric-input" /><div class="time-label">Hours</div></div>
+                                <div><input id="gachaMinuteInput" type="number" value="0" min="0" class="numeric-input" /><div class="time-label">Minutes</div></div>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Map (Egg Cost)</label>
+                            <div class="custom-select full-width" data-id="eggCostSelect">
+                                <div class="select-selected"><span>Shinobi Village (50)</span><div class="select-arrow"></div></div>
+                                <div class="select-items select-hide" id="eggCostOptions"></div>
                             </div>
                         </div>
                     </div>
@@ -825,10 +846,10 @@
 
                 <div class="result-section">
                     <div class="result-grid">
-                        <div class="result-box"><div id="gachaRealSpeedResult" class="value">--</div><div class="label">Real Opens / Second</div></div>
+                        <div class="result-box"><div id="gachaRealSpeedResult" class="value">--</div><div class="label">Opens / Second</div></div>
                         <div class="result-box"><div id="gachaPerHourResult" class="value">--</div><div class="label">Opens Per Hour</div></div>
-                        <div class="result-box"><div id="gachaLegTimeResult" class="value">--</div><div class="label">Time to Legendary</div></div>
-                        <div class="result-box highlight"><div id="gachaMythTimeResult" class="value">--</div><div class="label">Time to Mythic</div></div>
+                        <div class="result-box"><div id="gachaTotalCostResult" class="value">0</div><div class="label" id="gachaTotalCostLabel">Total Cost</div></div>
+                        <div class="result-box highlight"><div id="gachaTotalOpensResult" class="value">0</div><div class="label">Total Opens</div></div>
                     </div>
                 </div>
             </div>
@@ -960,8 +981,13 @@
             gachaMyth: document.getElementById('gachaMythInput'),
             gachaSpd: document.getElementById('gachaRealSpeedResult'),
             gachaHr: document.getElementById('gachaPerHourResult'),
-            gachaLegTime: document.getElementById('gachaLegTimeResult'),
-            gachaMythTime: document.getElementById('gachaMythTimeResult'),
+            
+            gDay: document.getElementById('gachaDayInput'),
+            gHour: document.getElementById('gachaHourInput'),
+            gMin: document.getElementById('gachaMinuteInput'),
+            gachaCostRes: document.getElementById('gachaTotalCostResult'),
+            gachaCostLabel: document.getElementById('gachaTotalCostLabel'),
+            gachaOpensRes: document.getElementById('gachaTotalOpensResult')
         };
 
         const state = { rankCps: 5.8, masteryCps: 5.8, damageCps: 5.8, unitCount: 0, isPotentialOpen: false, potentialMult: 1, potentialPotionMult: 1, gachaFast: true };
@@ -969,6 +995,18 @@
         const suffixMap = suffixList.reduce((acc, v) => ({...acc, [v]: v[0].toUpperCase() + v.slice(1)}), {});
         const suffixes = { "none": 0 }; 
         suffixList.forEach((k, i) => suffixes[suffixMap[k]] = i + 1);
+
+        // --- Simulated Data for Egg Costs (Since Data.js is external) ---
+        const eggData = [
+            { name: "Shinobi Village", cost: 50, currency: "Yen" },
+            { name: "Namek Planet", cost: 250, currency: "Yen" },
+            { name: "Desert Land", cost: 1250, currency: "Yen" },
+            { name: "Demon Land", cost: 7500, currency: "Yen" },
+            { name: "Paradis", cost: 45000, currency: "Yen" },
+            { name: "Shadow City", cost: 250000, currency: "Yen" },
+            { name: "Walled City", cost: 1500000, currency: "Yen" },
+            { name: "Dragon World", cost: 8000000, currency: "Yen" }
+        ];
 
         document.addEventListener('DOMContentLoaded', () => {
             const inputsToClear = [ dom.itemAccessory, dom.playerStats, dom.playerAura, dom.playerAvatar ];
@@ -978,7 +1016,7 @@
             initBijuuDropdown(); initMagicEyeDropdown(); initTitlesDropdown(); initRaceDropdown(); initSayajinDropdown(); 
             initHakiDropdown(); initFruitsDropdown(); initBreathingDropdown(); initDemonArtDropdown(); initOrganizationDropdown(); 
             initTitanDropdown(); initShinobiRaidDropdown(); initDungeonDropdown(); initPotentialMapDropdown(); initShadowsDropdown(); 
-            initShadowGateDropdown(); initAchievementsDropdowns();
+            initShadowGateDropdown(); initAchievementsDropdowns(); initEggCostDropdown();
 
             document.querySelectorAll('.custom-select').forEach(setupCustomSelect);
             setupSpeedToggle('fastBtn', 'slowBtn', 'masteryCps', updateMastery);
@@ -997,7 +1035,7 @@
             gFast.addEventListener('click', () => { state.gachaFast = true; gFast.classList.add('active'); gNorm.classList.remove('active'); updateGacha(); });
             gNorm.addEventListener('click', () => { state.gachaFast = false; gNorm.classList.add('active'); gFast.classList.remove('active'); updateGacha(); });
 
-            const inputs = [dom.dmg, dom.masCur, dom.dInput, dom.hInput, dom.mInput, dom.dmgDmg, dom.crit, dom.dmgHero, dom.dropAmt, dom.dropMul, dom.dropChn, dom.rankMpc, dom.rankCur, dom.gachaAmt, dom.gachaLeg, dom.gachaMyth];
+            const inputs = [dom.dmg, dom.masCur, dom.dInput, dom.hInput, dom.mInput, dom.dmgDmg, dom.crit, dom.dmgHero, dom.dropAmt, dom.dropMul, dom.dropChn, dom.rankMpc, dom.rankCur, dom.gachaAmt, dom.gachaLeg, dom.gachaMyth, dom.gDay, dom.gHour, dom.gMin];
             inputs.forEach(el => el.addEventListener('input', updateAll));
 
             setupSuffixInput(dom.dmg, 'suffixSelect', updateMastery);
@@ -1132,7 +1170,10 @@
             const eyeSel = document.querySelector('[data-id="potMagicEyeSelect"]');
             const eyeBase = parseFloat(eyeSel.getAttribute('data-value')) || 0;
             let eyeLvl = parseInt(dom.potEyeLvl.value); if (eyeLvl > 50) { eyeLvl = 50; dom.potEyeLvl.value = 50; } if (isNaN(eyeLvl) || eyeLvl < 0) eyeLvl = 0;
-            const eyePercentBonus = eyeBase + (eyeBase * 0.1 * eyeLvl);
+            let eyePercentBonus = eyeBase + (eyeBase * 0.1 * eyeLvl);
+            // FIX: Round 1098% to 1100% at Level 50
+            if (Math.round(eyePercentBonus) === 1098 && eyeLvl === 50) eyePercentBonus = 1100;
+            
             const eyeFactor = BigInt(Math.round(100 + eyePercentBonus));
             const eyeObj = magicEyeData.find(e => e.base === eyeBase);
             if (eyeObj) {
@@ -1144,7 +1185,10 @@
             const daSel = document.querySelector('[data-id="potDemonArtSelect"]');
             const daBase = parseFloat(daSel.getAttribute('data-value')) || 0;
             let daLvl = parseInt(dom.potDemonArtLvl.value); if (daLvl > 50) { daLvl = 50; dom.potDemonArtLvl.value = 50; } if (isNaN(daLvl) || daLvl < 0) daLvl = 0;
-            const daPercentBonus = daBase + (daBase * 0.1 * daLvl);
+            let daPercentBonus = daBase + (daBase * 0.1 * daLvl);
+            // FIX: Round 1098% to 1100% at Level 50
+            if (Math.round(daPercentBonus) === 1098 && daLvl === 50) daPercentBonus = 1100;
+
             const daFactor = BigInt(Math.round(100 + daPercentBonus));
             const daObj = demonArtData.find(e => e.base === daBase);
             if (daObj) {
@@ -1314,30 +1358,47 @@ function updateDamage() {
         }
         
         function updateGacha() {
-            const TIME_FAST_GP = 0.8; 
-            const TIME_NORMAL = 2.5;
-            const TIME_SLOWDOWN = 4.0;
+            const TIME_BASE = 2.0; 
+            const TIME_FAST_FACTOR = 1.4; 
+            const SLOWDOWN_FACTOR = 1.5;  
+
             const batchSize = parseInt(dom.gachaAmt.value) || 1;
             const legChance = (parseFloat(dom.gachaLeg.value) || 0) / 100;
             const mythChance = (parseFloat(dom.gachaMyth.value) || 0) / 100;
 
-            const baseTime = state.gachaFast ? TIME_FAST_GP : TIME_NORMAL;
-            const pNoLegInBatch = Math.pow(1 - legChance, batchSize);
-            const pNoMythInBatch = Math.pow(1 - mythChance, batchSize);
-            const pHitRare = 1 - (pNoLegInBatch * pNoMythInBatch);
-            const averageBatchTime = baseTime + (pHitRare * TIME_SLOWDOWN);
+            const normalTimePerOpen = state.gachaFast ? (TIME_BASE / TIME_FAST_FACTOR) : TIME_BASE;
+
+            // Calculate Slowdown for the Average Speed Display
+            const pRare = legChance + mythChance;
+            const pAnyRareInBatch = 1 - Math.pow(1 - pRare, batchSize);
+            const batchBaseTime = normalTimePerOpen * batchSize;
+            const batchSlowTime = batchBaseTime * SLOWDOWN_FACTOR;
+            const averageBatchTime = (batchBaseTime * (1 - pAnyRareInBatch)) + (batchSlowTime * pAnyRareInBatch);
 
             let realOpensPerSec = 0;
             if (averageBatchTime > 0) realOpensPerSec = batchSize / averageBatchTime;
 
+            // Update Stats Results
             dom.gachaSpd.innerHTML = realOpensPerSec.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
             dom.gachaHr.innerHTML = formatNumber(BigInt(Math.round(realOpensPerSec * 3600)));
 
-            if (legChance > 0 && realOpensPerSec > 0) dom.gachaLegTime.innerHTML = formatTime(1 / (legChance * realOpensPerSec));
-            else dom.gachaLegTime.innerHTML = legChance === 0 ? "Never" : "--";
+            // Calculate Total Cost based on Duration and EXACT Speed (Opens = Speed * Time)
+            const days = parseInt(dom.gDay.value) || 0;
+            const hours = parseInt(dom.gHour.value) || 0;
+            const mins = parseInt(dom.gMin.value) || 0;
+            const totalSeconds = (days * 86400) + (hours * 3600) + (mins * 60);
 
-            if (mythChance > 0 && realOpensPerSec > 0) dom.gachaMythTime.innerHTML = formatTime(1 / (mythChance * realOpensPerSec));
-            else dom.gachaMythTime.innerHTML = mythChance === 0 ? "Never" : "--";
+            const eggSel = document.querySelector('[data-id="eggCostSelect"]');
+            const costPerEgg = parseInt(eggSel.getAttribute('data-cost')) || 0;
+            const currency = eggSel.getAttribute('data-curr') || "Yen";
+
+            // Calculation based on displayed average speed
+            const totalOpens = Math.floor(realOpensPerSec * totalSeconds);
+            const totalCost = BigInt(totalOpens) * BigInt(costPerEgg);
+
+            dom.gachaCostRes.innerHTML = formatNumber(totalCost);
+            dom.gachaCostLabel.innerHTML = `Total ${currency} Cost`;
+            dom.gachaOpensRes.innerHTML = totalOpens.toLocaleString();
         }
 
         function updateAll() { updateMastery(); updateDamage(); updateRank(); updatePotential(); updateGacha(); }
@@ -1431,6 +1492,24 @@ function updateDamage() {
         function initMapDropdown() {
             const mapSelect = document.getElementById('mapOptions');
             Object.keys(gameData).forEach(k => mapSelect.innerHTML += `<div data-value="${k}">${k}</div>`);
+        }
+
+        function initEggCostDropdown() {
+            const el = document.getElementById('eggCostOptions');
+            const parent = document.querySelector('[data-id="eggCostSelect"]');
+            
+            eggData.forEach((d, i) => {
+                const label = `${d.name} (${d.cost.toLocaleString()})`;
+                el.innerHTML += `<div data-value="${d.name}" data-cost="${d.cost}" data-curr="${d.currency}" class="${i===0?'same-as-selected':''}">${label}</div>`;
+            });
+            
+            if(eggData.length > 0) {
+                const first = eggData[0];
+                parent.setAttribute('data-value', first.name);
+                parent.setAttribute('data-cost', first.cost);
+                parent.setAttribute('data-curr', first.currency);
+                parent.querySelector('span').textContent = `${first.name} (${first.cost.toLocaleString()})`;
+            }
         }
 
         function initMobCountDropdown() {
@@ -1535,6 +1614,9 @@ function updateDamage() {
                         const txt = div.textContent;
                         sel.setAttribute('data-value', val);
                         if(div.hasAttribute('data-hp')) sel.setAttribute('data-hp', div.getAttribute('data-hp'));
+                        if(div.hasAttribute('data-cost')) sel.setAttribute('data-cost', div.getAttribute('data-cost'));
+                        if(div.hasAttribute('data-curr')) sel.setAttribute('data-curr', div.getAttribute('data-curr'));
+
                         const span = selected.querySelector('span');
                         span.textContent = txt; fitTextToContainer(span);
 
