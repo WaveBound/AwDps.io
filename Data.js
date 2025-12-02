@@ -53,12 +53,12 @@ const rankCostsData = [
     "224.65Td",   // Rank 43
     "752.4Td",       // Rank 44
     "6.55Qad",   // Rank 45
-    "142.3Qad",   // Rank 46
-    "1.14Qid",    // Rank 47
-    "9.12Qid",    // Rank 48
-    "72.9Qid",    // Rank 49
-    "583.7Qid",   // Rank 50
-    "4.67Sxd"     // Rank 51
+    "56.95Qad",   // Rank 46
+    "2.36Qid",    // Rank 47
+    "???",    // Rank 48
+    "???",    // Rank 49
+    "???",   // Rank 50
+    "???"     // Rank 51
 ];
 
 const bijuuData = [
