@@ -320,6 +320,7 @@
       
       .side-panel .numeric-input, .side-panel .select-selected { height: 35px !important; padding: 0 10px; font-size: 13px; }
       .side-panel input { padding: 0 10px; }
+      #wavePanel .select-selected span { font-size: 13px !important; }
       
       #unitsPanel .unit-ui-title { margin-bottom: 10px; padding-bottom: 8px; margin-top: 10px; }
       #unitsPanel .result-box.mini-highlight { margin-top: 10px; }
@@ -661,7 +662,6 @@
                                 <div class="select-items select-hide" id="potTitanOptions"></div>
                             </div>
                         </div>
-                         <!-- NEW TITAN PET INPUT STARTS HERE -->
                         <div class="input-group" style="margin-bottom:0;">
                             <label>Titan Pet</label>
                             <div class="custom-select full-width" data-id="potTitanPetSelect">
@@ -669,7 +669,6 @@
                                 <div class="select-items select-hide" id="potTitanPetOptions"></div>
                             </div>
                         </div>
-                        <!-- NEW TITAN PET INPUT ENDS HERE -->
                         <div class="input-group" style="margin-bottom:0;">
                             <label>Leve Trainer (%)</label>
                             <input id="potLeveTrainerInput" placeholder="0" value="0" type="number" class="numeric-input" />
@@ -894,6 +893,60 @@
                 <button id="addUnitBtn" class="add-unit-btn">+ Add Unit</button>
                 <div class="result-box mini-highlight"><div id="unitsTotalResult" class="value">0%</div><div class="label">Total Unit Bonus</div></div>
             </div>
+
+<div id="wavePanel" class="side-panel">
+                <h3 class="unit-ui-title">Wave Calculator</h3>
+                <div class="input-group">
+                    <label>Wave</label>
+                    <input id="waveInput" type="number" class="numeric-input" placeholder="1" value="1" style="text-align:center;">
+                </div>
+                <div class="input-group">
+                    <label>Selected Mode</label>
+                    <div class="custom-select full-width" data-id="waveModeSelect">
+                        <div class="select-selected"><span>None</span><div class="select-arrow"></div></div>
+                        <div class="select-items select-hide">
+                            <div data-value="None" class="same-as-selected">None</div>
+                            <div data-value="Shinobi">Shinobi</div>
+                            <div data-value="AoT Defense">AoT Defense</div>
+                            <div data-value="Shadow Gate">Shadow Gate</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Calculation Type</label>
+                    <div class="mode-toggle">
+                        <!-- Swapped Order: Obtain first and Active by default -->
+                        <button id="waveObtainBtn" class="mode-btn active">Obtain Wave</button>
+                        <button id="waveClearBtn" class="mode-btn">Clear Wave</button>
+                    </div>
+                </div>
+                
+                <div class="units-grid" style="margin-top: 15px; max-height: none; overflow: visible;">
+                    <!-- 1. DPS Needed (Full Width) -->
+                    <div class="result-box mini-highlight" style="margin-top: 0; padding: 12px 10px; grid-column: span 2;">
+                        <div id="waveDpsResult" class="value" style="font-size: 15px;">--</div>
+                        <div class="label" style="font-size: 9px;">DPS Needed</div>
+                    </div>
+
+                    <!-- 2. Total HP (Full Width) -->
+                    <div class="result-box mini-highlight" style="margin-top: 0; padding: 12px 10px; grid-column: span 2;">
+                        <div id="waveTotalHpResult" class="value" style="font-size: 15px;">--</div>
+                        <div class="label" style="font-size: 9px;">Total HP</div>
+                    </div>
+
+                    <!-- 3. Boss HP (Left) -->
+                    <div class="result-box mini-highlight" style="margin-top: 0; padding: 12px 10px;">
+                        <div id="waveBossHpResult" class="value" style="font-size: 15px;">--</div>
+                        <div class="label" style="font-size: 9px;">Boss HP</div>
+                    </div>
+
+                    <!-- 4. Mob HP (Right) -->
+                    <div class="result-box mini-highlight" style="margin-top: 0; padding: 12px 10px;">
+                        <div id="waveMobHpResult" class="value" style="font-size: 15px;">--</div>
+                        <div class="label" style="font-size: 9px;">Mob HP</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="side-column right-aligned">
@@ -1004,16 +1057,24 @@
             gMin: document.getElementById('gachaMinuteInput'),
             gachaCostRes: document.getElementById('gachaTotalCostResult'),
             gachaCostLabel: document.getElementById('gachaTotalCostLabel'),
-            gachaOpensRes: document.getElementById('gachaTotalOpensResult')
+            gachaOpensRes: document.getElementById('gachaTotalOpensResult'),
+
+            // Wave Panel
+            waveIn: document.getElementById('waveInput'),
+            waveMode: document.querySelector('[data-id="waveModeSelect"]'),
+            waveMob: document.getElementById('waveMobHpResult'),
+            waveBoss: document.getElementById('waveBossHpResult'),
+            waveTotal: document.getElementById('waveTotalHpResult'),
+            waveDps: document.getElementById('waveDpsResult')
         };
 
         const state = { rankCps: 5.8, masteryCps: 5.8, damageCps: 5.8, unitCount: 0, isPotentialOpen: false, potentialMult: 1, potentialPotionMult: 1, gachaFast: true };
         
-        const suffixMap = suffixList.reduce((acc, v) => ({...acc, [v]: v[0].toUpperCase() + v.slice(1)}), {});
+        const suffixMap = suffixList.reduce((acc, v) => ({...acc, [v.toLowerCase()]: v}), {});
+        
         const suffixes = { "none": 0 }; 
-        suffixList.forEach((k, i) => suffixes[suffixMap[k]] = i + 1);
-
-        // NOTE: eggData is now loaded from Data.js
+        // FIXED: Use the suffixList directly to set exponents
+        suffixList.forEach((k, i) => suffixes[k] = i + 1);
 
         document.addEventListener('DOMContentLoaded', () => {
             const inputsToClear = [ dom.itemAccessory, dom.playerStats, dom.playerAura, dom.playerAvatar ];
@@ -1041,9 +1102,15 @@
             const gNorm = document.getElementById('gachaNormalBtn');
             gFast.addEventListener('click', () => { state.gachaFast = true; gFast.classList.add('active'); gNorm.classList.remove('active'); updateGacha(); });
             gNorm.addEventListener('click', () => { state.gachaFast = false; gNorm.classList.add('active'); gFast.classList.remove('active'); updateGacha(); });
+            
+            // Wave Panel Toggle Logic
+            const wClear = document.getElementById('waveClearBtn');
+            const wObtain = document.getElementById('waveObtainBtn');
+            wClear.addEventListener('click', () => { wClear.classList.add('active'); wObtain.classList.remove('active'); updateWave(); });
+            wObtain.addEventListener('click', () => { wObtain.classList.add('active'); wClear.classList.remove('active'); updateWave(); });
 
-            const inputs = [dom.dmg, dom.masCur, dom.dInput, dom.hInput, dom.mInput, dom.dmgDmg, dom.crit, dom.dmgHero, dom.dropAmt, dom.dropMul, dom.dropChn, dom.rankMpc, dom.rankCur, dom.gachaAmt, dom.gachaLeg, dom.gachaMyth, dom.gDay, dom.gHour, dom.gMin];
-            inputs.forEach(el => el.addEventListener('input', updateAll));
+            const inputs = [dom.dmg, dom.masCur, dom.dInput, dom.hInput, dom.mInput, dom.dmgDmg, dom.crit, dom.dmgHero, dom.dropAmt, dom.dropMul, dom.dropChn, dom.rankMpc, dom.rankCur, dom.gachaAmt, dom.gachaLeg, dom.gachaMyth, dom.gDay, dom.gHour, dom.gMin, dom.waveIn];
+            inputs.forEach(el => { if(el) el.addEventListener('input', updateAll) });
 
             setupSuffixInput(dom.dmg, 'suffixSelect', updateMastery);
             setupSuffixInput(dom.masCur, 'currentMasterySuffixSelect', updateMastery);
@@ -1073,11 +1140,8 @@
 
             document.addEventListener('click', (e) => { if (!e.target.closest('.select-selected') && !e.target.closest('.portal-dropdown')) closeAllPortals(); });
 
-// Helper function to max out a specific container/section
             function maximizeSection(section) {
                 if (!section) return;
-                
-                // Max Dropdowns
                 section.querySelectorAll('.custom-select').forEach(sel => {
                     const optionsContainer = sel.querySelector('.select-items');
                     if (optionsContainer && optionsContainer.children.length > 0) {
@@ -1090,14 +1154,11 @@
                         fitTextToContainer(span);
                     }
                 });
-
-                // Max Inputs (Levels to 50, Trainers to 200)
                 section.querySelectorAll('input.numeric-input, input.compact-input').forEach(input => {
                     input.value = input.id.toLowerCase().includes('level') ? 50 : 200; 
                 });
             }
 
-            // Button: Max Map (Current Map Only)
             document.getElementById('btnMaxMap').addEventListener('click', () => {
                 const mapSelect = document.querySelector('[data-id="potMapSelect"]');
                 const currentMapKey = mapSelect.getAttribute('data-value'); 
@@ -1106,7 +1167,6 @@
                 updatePotential();
             });
 
-            // Button: Max All Maps (Global)
             document.getElementById('btnMaxGlobal').addEventListener('click', () => {
                 const allMapSections = document.querySelectorAll('.map-section');
                 allMapSections.forEach(section => {
@@ -1118,10 +1178,6 @@
             updateAll();
             document.querySelectorAll('.custom-select').forEach(el => fitTextToContainer(el.querySelector('.select-selected span')));
         });
-
-        // ==========================================
-        // 4. CALCULATION LOGIC
-        // ==========================================
 
         function addUnitInput() {
             if (state.unitCount >= 16) return;
@@ -1332,13 +1388,10 @@
             else dom.rankTime.innerHTML = "Infinite";
         }
         
-function updateGacha() {
-            // -- CONSTANTS --
+        function updateGacha() {
             const TIME_NORMAL = 2.0;    
             const TIME_FAST = 1.2;      
             const SLOW_DELAY = 1.0;     
-
-            // -- INPUTS --
             const batchSize = parseInt(dom.gachaAmt.value) || 1;
             const legChance = (parseFloat(dom.gachaLeg.value) || 0) / 100;
             const mythChance = (parseFloat(dom.gachaMyth.value) || 0) / 100;
@@ -1349,38 +1402,23 @@ function updateGacha() {
 
             const eggSel = document.querySelector('[data-id="eggCostSelect"]');
             
-            // --- CHANGE 1: Use parseSuffixedString to handle "1.5m", "50", etc. ---
             const costPerEgg = parseSuffixedString(eggSel.getAttribute('data-cost') || "0");
             
             const currency = eggSel.getAttribute('data-curr') || "Yen";
 
-            // -- CALCULATIONS --
-            
-            // 1. Time per Batch
             const baseTimePerBatch = state.gachaFast ? TIME_FAST : TIME_NORMAL;
-
-            // 2. Probability of slowdown
             const pRare = legChance + mythChance;
             const pAnyRareInBatch = 1 - Math.pow(1 - pRare, batchSize);
-            
-            // 3. Average time per batch
             const averageTimePerBatch = baseTimePerBatch + (pAnyRareInBatch * SLOW_DELAY);
 
-            // 4. Rate: Opens (Eggs) Per Second
             let eggsPerSecond = 0;
-            if (averageTimePerBatch > 0) {
-                eggsPerSecond = batchSize / averageTimePerBatch;
-            }
+            if (averageTimePerBatch > 0) { eggsPerSecond = batchSize / averageTimePerBatch; }
 
-            // 5. Total Opens over Duration
             const totalDurationSeconds = (days * 86400) + (hours * 3600) + (mins * 60);
             const totalOpens = Math.floor(eggsPerSecond * totalDurationSeconds);
 
-            // 6. Total Cost
-            // --- CHANGE 2: Removed "* 100n" because parseSuffixedString already scales by 100 ---
             const totalCost = BigInt(totalOpens) * costPerEgg;
 
-            // -- DISPLAY --
             dom.gachaSpd.innerHTML = eggsPerSecond.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
             dom.gachaHr.innerHTML = Math.floor(eggsPerSecond * 3600).toLocaleString();
             
@@ -1389,7 +1427,94 @@ function updateGacha() {
             dom.gachaOpensRes.innerHTML = totalOpens.toLocaleString();
         }
 
-        function updateAll() { updateMastery(); updateDamage(); updateRank(); updatePotential(); updateGacha(); }
+function updateWave() {
+            // 1. Get current wave
+            let wave = parseInt(dom.waveIn.value) || 1;
+
+            // --- SAFETY LIMIT: Max Wave 1000 ---
+            if (wave > 1000) {
+                wave = 1000;
+                dom.waveIn.value = "1000"; // Visually fix the input
+            }
+            if (wave < 1) {
+                wave = 1;
+                dom.waveIn.value = "1";
+            }
+            // ------------------------------------
+
+            const modeKey = dom.waveMode.getAttribute('data-value') || "None";
+            const data = waveScalingData[modeKey];
+
+            if (!data || modeKey === "None") {
+                dom.waveMob.innerHTML = "--";
+                dom.waveBoss.innerHTML = "--";
+                dom.waveTotal.innerHTML = "--";
+                dom.waveDps.innerHTML = "--";
+                return;
+            }
+
+            let currentHp = 0n;
+
+            // --- SPECIFIC LOGIC FOR SHINOBI & SHADOW GATE ---
+            if (modeKey === "Shinobi" || modeKey === "Shadow Gate") {
+                const baseVal = parseSuffixedString(data.base);
+                
+                if (wave === 1) {
+                    currentHp = baseVal;
+                } else if (wave === 2) {
+                    currentHp = (baseVal * 8n) / 3n;
+                } else if (wave === 3) {
+                    currentHp = (baseVal * 12n) / 3n;
+                } else if (wave === 4) {
+                    currentHp = (baseVal * 16n) / 3n;
+                } else if (wave === 5) {
+                    currentHp = (baseVal * 200n) / 3n;
+                } else {
+                    // --- Wave 6+ Logic ---
+                    currentHp = (baseVal * 200n) / 3n;
+                    let currentInc = parseSuffixedString(data.increment);
+
+                    for (let w = 6; w <= wave; w++) {
+                        currentHp = currentHp + currentInc;
+                        if (w % 5 === 0) {
+                            currentHp = currentHp * 10n;
+                            currentInc = currentInc * 10n;
+                        }
+                    }
+                }
+            } 
+            // --- STANDARD LOGIC FOR AOT DEFENSE ---
+            else {
+                currentHp = parseSuffixedString(data.base); 
+                let currentInc = parseSuffixedString(data.increment);
+                
+                for (let w = 2; w <= wave; w++) {
+                    currentHp = currentHp + currentInc;
+                    if (w % 5 === 0) {
+                        currentHp = currentHp * 10n;
+                        currentInc = currentInc * 10n;
+                    }
+                }
+            }
+
+            // Calculate Result Boxes
+            let mobHp = 0n;
+            if (modeKey === "AoT Defense") {
+                mobHp = currentHp / 4n; 
+            } else {
+                mobHp = (currentHp * 12n) / 100n; 
+            }
+
+            const totalHp = currentHp + mobHp;
+            const dpsNeeded = totalHp / 60n;
+
+            dom.waveMob.innerHTML = formatNumber(mobHp);
+            dom.waveBoss.innerHTML = formatNumber(currentHp);
+            dom.waveTotal.innerHTML = formatNumber(totalHp);
+            dom.waveDps.innerHTML = formatNumber(dpsNeeded);
+        }
+
+        function updateAll() { updateMastery(); updateDamage(); updateRank(); updatePotential(); updateGacha(); updateWave(); }
 
         function setTheme(name) {
             const t = themes[name]; if(!t) return;
@@ -1405,9 +1530,26 @@ function updateGacha() {
                 const tab = b.dataset.tab;
                 document.getElementById(tab + '-content').classList.add('active');
                 setTheme(tab);
-                dom.panel.classList.toggle('active', tab === 'damage');
-                if (tab !== 'mastery') { dom.unitsPanel.classList.remove('active'); dom.statsPanel.classList.remove('active'); dom.achievementsPanel.classList.remove('active'); } 
-                else if (state.isPotentialOpen) { dom.unitsPanel.classList.add('active'); dom.statsPanel.classList.add('active'); dom.achievementsPanel.classList.add('active'); dom.panel.classList.remove('active'); }
+
+                // --- Sidebar Logic ---
+                dom.panel.classList.remove('active'); // Drop panel (Right)
+                dom.unitsPanel.classList.remove('active'); // Units (Left)
+                dom.statsPanel.classList.remove('active'); // Stats (Left)
+                dom.achievementsPanel.classList.remove('active'); // Achiev (Right)
+                const wavePanel = document.getElementById('wavePanel'); // Wave (Left)
+                if(wavePanel) wavePanel.classList.remove('active');
+
+                if (tab === 'damage') {
+                    dom.panel.classList.add('active'); // Show Drops
+                    if(wavePanel) wavePanel.classList.add('active'); // Show Wave
+                } 
+                else if (tab === 'mastery') {
+                    if (state.isPotentialOpen) { 
+                        dom.unitsPanel.classList.add('active'); 
+                        dom.statsPanel.classList.add('active'); 
+                        dom.achievementsPanel.classList.add('active'); 
+                    }
+                }
             });
         });
 
@@ -1484,12 +1626,11 @@ function updateGacha() {
             Object.keys(gameData).forEach(k => mapSelect.innerHTML += `<div data-value="${k}">${k}</div>`);
         }
 
-function initEggCostDropdown() {
+        function initEggCostDropdown() {
             const el = document.getElementById('eggCostOptions');
             const parent = document.querySelector('[data-id="eggCostSelect"]');
             
             eggData.forEach((d, i) => {
-                // --- CHANGE: Removed .toLocaleString(), just use d.cost directly ---
                 const label = `${d.name} (${d.cost})`;
                 el.innerHTML += `<div data-value="${d.name}" data-cost="${d.cost}" data-curr="${d.currency}" class="${i===0?'same-as-selected':''}">${label}</div>`;
             });
@@ -1499,7 +1640,6 @@ function initEggCostDropdown() {
                 parent.setAttribute('data-value', first.name);
                 parent.setAttribute('data-cost', first.cost);
                 parent.setAttribute('data-curr', first.currency);
-                // --- CHANGE: Update default label ---
                 parent.querySelector('span').textContent = `${first.name} (${first.cost})`;
             }
         }
@@ -1527,11 +1667,7 @@ function initEggCostDropdown() {
             if (n === 0n) return "0";
             let val = Number(n) / 100, idx = 0;
             while (val >= 1000 && idx < Object.keys(suffixMap).length) { val /= 1000; idx++; }
-            
-            // To prevent rounding up (e.g. 439.6T becoming 440T), we floor the decimal representation 
-            // before formatting.
             if (idx === 0) return val.toLocaleString(undefined, {maxFractionDigits: 2});
-            
             val = Math.floor(val * 100) / 100;
             return val.toFixed(2) + Object.values(suffixMap)[idx-1];
         }
@@ -1628,6 +1764,7 @@ function initEggCostDropdown() {
                             const targetSec = document.getElementById(`map-${mapKey}`);
                             if(targetSec) targetSec.classList.add('active');
                         }
+                        if (id === 'waveModeSelect') updateWave();
 
                         items.querySelectorAll('div').forEach(d => d.classList.remove('same-as-selected'));
                         const origItem = Array.from(items.children).find(c => c.textContent === txt);
