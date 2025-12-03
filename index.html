@@ -547,9 +547,10 @@
                     </div>
 
                     <div class="input-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
                             <span style="font-size: 14px; color: var(--primary-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; text-shadow: 0 0 10px var(--primary-dim);">Map Selection</span>
-                            <button id="btnMaxAll" class="max-btn" style="height: 24px; font-size: 10px; padding: 0 10px;">⚡ Max All</button>
+                            <button id="btnMaxMap" class="max-btn" style="height: 24px; font-size: 10px; padding: 0 10px;">Max Map</button>
+                            <button id="btnMaxGlobal" class="max-btn" style="height: 24px; font-size: 10px; padding: 0 10px;">Max All Maps</button>
                         </div>
                         <div class="input-row" style="justify-content: center;">
                             <div class="custom-select map-center-limit" data-id="potMapSelect">
@@ -1072,12 +1073,12 @@
 
             document.addEventListener('click', (e) => { if (!e.target.closest('.select-selected') && !e.target.closest('.portal-dropdown')) closeAllPortals(); });
 
-            document.getElementById('btnMaxAll').addEventListener('click', () => {
-                const mapSelect = document.querySelector('[data-id="potMapSelect"]');
-                const currentMapKey = mapSelect.getAttribute('data-value'); 
-                const activeSection = document.getElementById(`map-${currentMapKey}`);
-                if (!activeSection) return;
-                activeSection.querySelectorAll('.custom-select').forEach(sel => {
+// Helper function to max out a specific container/section
+            function maximizeSection(section) {
+                if (!section) return;
+                
+                // Max Dropdowns
+                section.querySelectorAll('.custom-select').forEach(sel => {
                     const optionsContainer = sel.querySelector('.select-items');
                     if (optionsContainer && optionsContainer.children.length > 0) {
                         const lastOption = optionsContainer.lastElementChild;
@@ -1089,8 +1090,27 @@
                         fitTextToContainer(span);
                     }
                 });
-                activeSection.querySelectorAll('input.numeric-input, input.compact-input').forEach(input => {
+
+                // Max Inputs (Levels to 50, Trainers to 200)
+                section.querySelectorAll('input.numeric-input, input.compact-input').forEach(input => {
                     input.value = input.id.toLowerCase().includes('level') ? 50 : 200; 
+                });
+            }
+
+            // Button: Max Map (Current Map Only)
+            document.getElementById('btnMaxMap').addEventListener('click', () => {
+                const mapSelect = document.querySelector('[data-id="potMapSelect"]');
+                const currentMapKey = mapSelect.getAttribute('data-value'); 
+                const activeSection = document.getElementById(`map-${currentMapKey}`);
+                maximizeSection(activeSection);
+                updatePotential();
+            });
+
+            // Button: Max All Maps (Global)
+            document.getElementById('btnMaxGlobal').addEventListener('click', () => {
+                const allMapSections = document.querySelectorAll('.map-section');
+                allMapSections.forEach(section => {
+                    maximizeSection(section);
                 });
                 updatePotential();
             });
