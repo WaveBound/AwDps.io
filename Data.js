@@ -3,7 +3,7 @@
 const suffixList = [
     'k', 'm', 'b', 't', 'qa', 'qi', 'sx', 'sp', 'oc', 'no', 
     'dc', 'ud', 'dd', 'td', 'qad', 'qid', 'sxd', 'spd', 'ocd', 'nod', 
-    'vg', 'uvg', 'dvg', 'tvg'
+    'dec', 'und', 'duo', 'tri', 'qua', 'qui', 'six', 'sep', 'oct', 'nuo'
 ];
 
 const rankCostsData = [
