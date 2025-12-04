@@ -1706,12 +1706,18 @@ function updateWave() {
             return BigInt(Math.round(raw * 100)) * (10n ** BigInt((suffixes[suf] || 0) * 3));
         }
 
-        function formatNumber(n) {
+         function formatNumber(n) {
             if (n === 0n) return "0";
+            // Convert BigInt to Number and account for the base multiplier (assuming inputs are x100)
             let val = Number(n) / 100, idx = 0;
+            
+            // Determine suffix (k, m, b, etc.)
             while (val >= 1000 && idx < Object.keys(suffixMap).length) { val /= 1000; idx++; }
-            if (idx === 0) return val.toLocaleString(undefined, {maxFractionDigits: 2});
-            val = Math.floor(val * 100) / 100;
+            
+            // If no suffix, let locale handling take care of rounding
+            if (idx === 0) return val.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+            val = Math.round(val * 100) / 100;
+            
             return val.toFixed(2) + Object.values(suffixMap)[idx-1];
         }
 
