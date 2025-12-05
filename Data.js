@@ -1,13 +1,11 @@
 /* --- Data.js --- */
 
 // --- Helpers ---
-// Generates: { name: "Name (+X%)", val: 100+X } OR { name: "...", base: X }
 const mk = (names, vals, key = 'val') => names.map((n, i) => ({
     name: `${n} (+${vals[i]}%)`, 
     [key]: key === 'val' ? 100 + vals[i] : vals[i] 
 }));
 
-// Generates achievement structure
 const ach = (title, names, vals) => ({ title, options: mk(names, vals) });
 
 const suffixList = ['K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc','Ud','Dd','Td','Qad','Qid','Sxd','Spd','Ocd','Nod','Dec','Und','Duo','Tri','Qua','Qui','Six','Sep','Oct','Nuo'];
@@ -21,7 +19,6 @@ const rankCostsData = [
     "56.95Qad", "2.36Qid", "???", "???", "???", "???"
 ];
 
-// --- Gacha / Potential Arrays ---
 const bijuuData = mk(
     ["None", "Chomeiha", "Shukaro", "Matabi", "Isobuya", "Son Goro", "Gyurin", "Kurara"],
     [0, 50, 100, 200, 300, 400, 600, 1000]
@@ -107,7 +104,6 @@ const shadowGateData = mk(
     [0, 50, 100, 200, 400, 1000]
 );
 
-// --- Achievements ---
 const achievementsData = [
     ach("Secret Boss (Multiplier)", ["None", "World 1", "World 2", "World 3", "World 4", "World 5", "World 6"], [0, 25, 50, 75, 100, 125, 150]),
     ach("Mastery", ["None", "500K Mastery", "500M Mastery", "500B Mastery", "5Qi Mastery", "50Sx Mastery", "50Sp Mastery", "100Sp Mastery", "600Sp Mastery", "4Oc Mastery", "50Oc Mastery", "200Oc Mastery", "4No Mastery", "40No Mastery", "600No Mastery", "2Dc Mastery"], [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]),
@@ -120,7 +116,6 @@ const achievementsData = [
     ach("Shadow Gate", ["None", "Wave 10!", "Wave 25!", "Wave 75!", "Wave 100!", "Wave 125!", "Wave 175!", "Wave 225!", "Wave 275!", "Wave 325!", "Wave 375!", "Wave 400!", "Wave 450!", "Wave 475!"], [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130])
 ];
 
-// --- Static Configs ---
 const gameData = {
     "Shinobi Village": [ {name:"Zabuzao",hp:"5.78k"}, {name:"Tobao",hp:"615k"}, {name:"Nargato",hp:"20.75M"}, {name:"Peixame",hp:"205M"}, {name:"Madeira",hp:"2B"}, {name:"Itaxin",hp:"30Qa"} ],
     "Namek Planet": [ {name:"Picole",hp:"3B"}, {name:"Frioso",hp:"797.85B"}, {name:"Friozaco",hp:"30T"}, {name:"Bubu",hp:"1Qa"}, {name:"Jeromin",hp:"20Qa"}, {name:"Gekao",hp:"80Sx"} ],
@@ -152,3 +147,55 @@ const themes = {
     damage: { primary: '#ff003c', light: '#ff003c', border: '#c20030', dim: 'rgba(194, 0, 48, 0.25)', glow: 'rgba(194, 0, 48, 0.4)' },
     gacha: { primary: '#4ade80', light: '#86efac', border: '#4ade80', dim: 'rgba(74, 222, 128, 0.15)', glow: 'rgba(74, 222, 128, 0.5)' }
 };
+
+const mapUIConfig = [
+    {
+        mapId: "ShinobiVillage",
+        items: [
+            { type: 'select', label: 'Bijuu Gacha', id: 'potBijuuSelect', source: bijuuData },
+            { type: 'special', label: 'Magic Eyes', id: 'potMagicEyeSelect', lvlId: 'potMagicEyeLevel', source: magicEyeData }
+        ]
+    },
+    {
+        mapId: "NamekPlanet",
+        items: [
+            { type: 'select', label: 'Race Gacha', id: 'potRaceSelect', source: raceData },
+            { type: 'select', label: 'Sayajin Gacha', id: 'potSayajinSelect', source: sayajinData },
+            { type: 'select', label: 'Titles', id: 'potTitlesSelect', source: titlesData },
+            { type: 'trainer', label: 'Wise Trainer (%)', id: 'potWiseTrainerInput' }
+        ]
+    },
+    {
+        mapId: "DesertLand",
+        items: [
+            { type: 'select', label: 'Haki Gacha', id: 'potHakiSelect', source: hakiData },
+            { type: 'select', label: 'Fruits Gacha', id: 'potFruitsSelect', source: fruitsData },
+            { type: 'trainer', label: 'Pirate Trainer (%)', id: 'potPirateTrainerInput' }
+        ]
+    },
+    {
+        mapId: "DemonLand",
+        items: [
+            { type: 'select', label: 'Breathing Gacha', id: 'potBreathingSelect', source: breathingData },
+            { type: 'trainer', label: 'Breath Trainer (%)', id: 'potBreathTrainerInput' },
+            { type: 'special', label: 'Demon Art', id: 'potDemonArtSelect', lvlId: 'potDemonArtLevel', source: demonArtData }
+        ]
+    },
+    {
+        mapId: "Paradis",
+        items: [
+            { type: 'select', label: 'Titan Gacha', id: 'potTitanSelect', source: titanData },
+            { type: 'select', label: 'Titan Pet', id: 'potTitanPetSelect', source: titanPetData },
+            { type: 'trainer', label: 'Leve Trainer (%)', id: 'potLeveTrainerInput' },
+            { type: 'select', label: 'Organization', id: 'potOrgSelect', source: organizationData }
+        ]
+    },
+    {
+        mapId: "ShadowCity",
+        items: [
+            { type: 'select', label: 'Shadows Gacha', id: 'potShadowsSelect', source: shadowsData },
+            { type: 'select', label: 'Shadow Gate', id: 'potShadowGateSelect', source: shadowGateData },
+            { type: 'select', label: 'Solo Rank', id: 'potSoloRankSelect', source: soloRanksData }
+        ]
+    }
+];

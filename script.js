@@ -11,26 +11,94 @@ const suffixMap = suffixList.reduce((acc, v) => ({...acc, [v.toLowerCase()]: v})
 const suffixExponents = { "none": 0 };
 suffixList.forEach((k, i) => suffixExponents[k] = i + 1);
 
-function parseSuffixed(str) {
-    const m = (str || "").match(/^([\d\.]+)\s*([a-zA-Z]+)?$/);
-    if (!m) return 0n;
-    const exp = suffixExponents[suffixMap[(m[2] || "none").toLowerCase()] || "none"] || 0;
-    return BigInt(Math.round(parseFloat(m[1]) * 100)) * (10n ** BigInt(exp * 3));
-}
+// --- NEW: GameNum Class (The Optimization) ---
+class GameNum {
+    constructor(inputId, selectDataId, callback) {
+        this.input = getEl(inputId);
+        this.select = qs(`[data-id="${selectDataId}"]`);
+        this.val = 0n; // The cached BigInt value
+        this.callback = callback;
 
-function parseInput(inputId, suffixId) {
-    const raw = parseFloat(getVal(inputId));
-    if (isNaN(raw) || raw < 0) return 0n;
-    const suf = getDataVal(suffixId);
-    return BigInt(Math.round(raw * 100)) * (10n ** BigInt((suffixExponents[suf] || 0) * 3));
-}
+        if (this.input && this.select) {
+            // "input" event: Updates calculation based on numbers, but ignores letters for now
+            this.input.addEventListener('input', () => {
+                this.recalc();
+                if(this.callback) this.callback();
+            });
 
-function formatNumber(n) {
-    if (n === 0n) return "0";
-    let val = Number(n) / 100, idx = 0;
-    while (val >= 1000 && idx < Object.keys(suffixMap).length) { val /= 1000; idx++; }
-    if (idx === 0) return val.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
-    return (Math.round(val * 100) / 100).toFixed(2) + Object.values(suffixMap)[idx-1];
+            // "change" event: Fires on Enter or Click Off. Handles suffix parsing.
+            this.input.addEventListener('change', () => this._onCommit());
+        }
+    }
+
+    recalc() {
+        if (!this.input || !this.select) return 0n;
+        
+        // parseFloat automatically stops at letters (e.g. "100td" becomes 100)
+        const raw = parseFloat(this.input.value);
+        if (isNaN(raw) || raw < 0) {
+            this.val = 0n;
+            return 0n;
+        }
+
+        const suf = this.select.getAttribute('data-value') || 'none';
+        const exp = suffixExponents[suf] || 0;
+        
+        this.val = BigInt(Math.round(raw * 100)) * (10n ** BigInt(exp * 3));
+        return this.val;
+    }
+
+    // Handles Enter key or Blur (Clicking off)
+    _onCommit() {
+        const val = this.input.value.trim();
+        // Regex to find Number + Letters (e.g., "100 td")
+        const m = val.match(/^([\d\.]+)\s*([a-zA-Z]+)$/);
+        
+        if (m) {
+            // m[1] is the number, m[2] is the letters
+            const numPart = m[1];
+            const letterPart = m[2].toLowerCase();
+
+            // Check if those letters exist in our suffix list
+            if (suffixMap[letterPart]) {
+                const newSuffix = suffixMap[letterPart];
+                
+                // Update the Dropdown
+                this.select.setAttribute('data-value', newSuffix);
+                const span = this.select.querySelector('span');
+                if(span) {
+                    span.textContent = newSuffix;
+                    const items = this.select.querySelectorAll('.select-items div');
+                    items.forEach(d => d.classList.remove('same-as-selected'));
+                    const match = Array.from(items).find(d => d.getAttribute('data-value') == newSuffix);
+                    if(match) match.classList.add('same-as-selected');
+                }
+            }
+            
+            // Remove the letters from the input field (whether valid or invalid)
+            this.input.value = numPart; 
+        }
+        
+        this.recalc();
+        if(this.callback) this.callback();
+    }
+
+    static format(n) {
+        if (typeof n !== 'bigint') n = BigInt(n || 0);
+        if (n === 0n) return "0";
+        let val = Number(n) / 100;
+        let idx = 0;
+        while (val >= 1000 && idx < suffixList.length) { val /= 1000; idx++; }
+        if (idx === 0) return val.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+        return (Math.round(val * 100) / 100).toFixed(2) + suffixList[idx-1];
+    }
+
+    static parse(str) {
+        const m = (str || "").toString().match(/^([\d\.]+)\s*([a-zA-Z]+)?$/);
+        if (!m) return 0n;
+        const exp = suffixExponents[suffixMap[(m[2] || "none").toLowerCase()] || "none"] || 0;
+        return BigInt(Math.round(parseFloat(m[1]) * 100)) * (10n ** BigInt(exp * 3));
+    }
 }
 
 function formatTime(s) {
@@ -48,9 +116,17 @@ const state = {
     potentialMult: 1, potentialPotionMult: 1, gachaFast: true 
 };
 
+// --- INPUT OBJECTS ---
+let rankMpc, rankCurrent;
+let masteryBase, masteryCurrent;
+let damageBase;
+
 // 3. INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
-    // Clear specific inputs on load
+    // GENERATE UI
+    generateMapUI();
+
+    // Clear specific inputs
     ['itemAccessoryInput', 'playerStatsInput', 'playerAuraInput', 'playerAvatarInput'].forEach(id => {
         const el = getEl(id); if(el) el.value = "";
     });
@@ -58,32 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setTheme('rank');
 
     // --- INITIALIZE DROPDOWNS ---
-    // We wrap this in a try-catch to ensure one failure doesn't kill the page
     try {
-        // Simple lists
         const suffixes = ['suffixSelect', 'currentMasterySuffixSelect', 'damageSuffixSelect', 'rankMpcSuffix', 'rankCurrentMasterySuffix'];
         suffixes.forEach(id => initDropdown(id, suffixList, 'none'));
 
-        // Data Lists
-        initDropdown('potBijuuSelect', bijuuData, 100);
-        initDropdown('potMagicEyeSelect', magicEyeData, 0);
-        initDropdown('potTitlesSelect', titlesData, 100);
-        initDropdown('potRaceSelect', raceData, 100);
-        initDropdown('potSayajinSelect', sayajinData, 100);
-        initDropdown('potHakiSelect', hakiData, 100);
-        initDropdown('potFruitsSelect', fruitsData, 100);
-        initDropdown('potBreathingSelect', breathingData, 100);
-        initDropdown('potDemonArtSelect', demonArtData, 0);
-        initDropdown('potOrgSelect', organizationData, 100);
-        initDropdown('potTitanSelect', titanData, 100);
-        initDropdown('potTitanPetSelect', titanPetData, 100);
         initDropdown('potShinobiRaidSelect', shinobiRaidData, 100);
         initDropdown('potDungeonSelect', dungeonData, 100);
-        initDropdown('potShadowsSelect', shadowsData, 100);
-        initDropdown('potShadowGateSelect', shadowGateData, 100);
-        initDropdown('potSoloRankSelect', soloRanksData, 100);
 
-        // Complex Lists
         initRankDropdowns(); 
         initMapDropdown(); 
         initMobCountDropdown(); 
@@ -92,9 +149,24 @@ document.addEventListener('DOMContentLoaded', () => {
         initEggCostDropdown(); 
         initWavePlayerDropdown();
 
-        // Attach logic to all dropdowns
+        mapUIConfig.forEach(map => {
+            map.items.forEach(item => {
+                if (item.type === 'select' || item.type === 'special') {
+                    const def = (item.type === 'special') ? 0 : 100;
+                    initDropdown(item.id, item.source, def);
+                }
+            });
+        });
+
         document.querySelectorAll('.custom-select').forEach(setupCustomSelect);
     } catch(e) { console.error("Dropdown Init Failed:", e); }
+
+    // --- INITIALIZE GAME NUMBERS ---
+    rankMpc = new GameNum('rankMpcInput', 'rankMpcSuffix', updateRank);
+    rankCurrent = new GameNum('rankCurrentMasteryInput', 'rankCurrentMasterySuffix', updateRank);
+    masteryBase = new GameNum('dmgInput', 'suffixSelect', updateMastery);
+    masteryCurrent = new GameNum('currentMasteryInput', 'currentMasterySuffixSelect', updateMastery);
+    damageBase = new GameNum('damageDmgInput', 'damageSuffixSelect', updateDamage);
 
     // --- BUTTONS & TOGGLES ---
     setupSpeedToggle('fastBtn', 'slowBtn', 'masteryCps', updateMastery);
@@ -121,15 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- EVENT LISTENERS ---
-    // Update everything on any input change
     document.addEventListener('input', (e) => {
         if (e.target.tagName === 'INPUT') updateAll();
-    });
-
-    // Auto-format suffix inputs
-    ['dmgInput', 'currentMasteryInput', 'damageDmgInput', 'rankMpcInput', 'rankCurrentMasteryInput'].forEach(id => {
-        const el = getEl(id);
-        if(el) setupSuffixInput(el, el.nextElementSibling.getAttribute('data-id'), updateAll);
     });
 
     // --- VIEW SWITCHING ---
@@ -141,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
             masterMain.style.display = 'none'; masterSub.style.display = 'block'; 
             safeClassAdd('#unitsPanel', 'active'); safeClassAdd('#statsPanel', 'active'); 
             safeClassAdd('#achievementsPanel', 'active'); safeClassRemove('#sidePanel', 'active');
-            document.querySelectorAll('.custom-select').forEach(el => fitTextToContainer(el.querySelector('.select-selected span')));
         };
         btnBack.onclick = () => {
             state.isPotentialOpen = false; masterSub.style.display = 'none'; masterMain.style.display = 'block';
@@ -149,51 +213,68 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- UNITS ---
     const uBtn = getEl('addUnitBtn');
     if(uBtn) {
         for(let i=0; i<8; i++) addUnitInput();
         uBtn.onclick = () => { 
-            if (state.unitCount < 16) { 
-                addUnitInput(); 
-                if(state.unitCount < 16) addUnitInput(); 
-                getEl('unitInputsContainer').scrollTop = 0; 
-            } 
+            if (state.unitCount < 16) { addUnitInput(); if(state.unitCount < 16) addUnitInput(); getEl('unitInputsContainer').scrollTop = 0; } 
             if(state.unitCount >= 16) { uBtn.textContent="Max Limit"; uBtn.style.opacity="0.5"; } 
             updatePotential();
         };
     }
 
-    // --- CLICK HANDLING ---
     document.addEventListener('click', (e) => { 
         if (!e.target.closest('.select-selected') && !e.target.closest('.portal-dropdown')) closeAllPortals(); 
     });
 
-    // --- MAX BUTTONS ---
     const btnMaxMap = getEl('btnMaxMap'), btnMaxGlobal = getEl('btnMaxGlobal');
     if(btnMaxMap) btnMaxMap.onclick = () => { maximizeSection(getEl(`map-${getDataVal('potMapSelect')}`)); updatePotential(); };
     if(btnMaxGlobal) btnMaxGlobal.onclick = () => { document.querySelectorAll('.map-section').forEach(maximizeSection); updatePotential(); };
 
     // Initial Calc
     updateAll();
-    // Fit text for all dropdowns on load
-    setTimeout(() => {
-        document.querySelectorAll('.custom-select').forEach(el => fitTextToContainer(el.querySelector('.select-selected span')));
-    }, 100);
 });
 
 /* --- GENERATORS --- */
+function generateMapUI() {
+    const container = getEl('generated-maps-container');
+    if (!container) return;
+    let html = '';
+    mapUIConfig.forEach((map, index) => {
+        const isActive = index === 0 ? 'active' : '';
+        html += `<div id="map-${map.mapId}" class="map-section ${isActive}">`;
+        map.items.forEach(item => {
+            if (item.type === 'select') {
+                html += `<div class="input-group" style="margin-bottom:0;"><label>${item.label}</label><div class="custom-select full-width" data-id="${item.id}"><div class="select-selected"><span>None (+0%)</span><div class="select-arrow"></div></div><div class="select-items select-hide"></div></div></div>`;
+            } else if (item.type === 'trainer') {
+                html += `<div class="input-group" style="margin-bottom:0;"><label>${item.label}</label><input id="${item.id}" placeholder="0" value="0" type="number" class="numeric-input" /></div>`;
+            } else if (item.type === 'special') {
+                html += `
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>${item.label}</label>
+                    <div class="joined-row">
+                        <div class="custom-select" data-id="${item.id}">
+                            <div class="select-selected"><span>None (+0%)</span><div class="select-arrow"></div></div>
+                            <div class="select-items select-hide"></div>
+                        </div>
+                        <input id="${item.lvlId}" class="numeric-input level-input" type="number" value="" min="0" max="50" placeholder="Lvl" />
+                    </div>
+                </div>`;
+            }
+        });
+        html += `</div>`;
+    });
+    container.innerHTML = html;
+}
 
 function initDropdown(id, data, def) {
     const parent = qs(`[data-id="${id}"]`);
-    if(!parent) return; // Defensive check
+    if(!parent) return;
     const s = parent.querySelector('.select-items');
     if(!s) return;
 
     const isStr = typeof data[0] === 'string';
-    s.innerHTML = ''; // Clear existing
-    
-    // Add "None" option if implied by default or string array
+    s.innerHTML = ''; 
     if(id.includes('Suffix')) s.innerHTML += '<div data-value="none">None</div>';
     
     data.forEach((item) => {
@@ -201,14 +282,11 @@ function initDropdown(id, data, def) {
         const name = isStr ? item : item.name;
         s.innerHTML += `<div data-value="${val}">${name}</div>`;
     });
-    
-    // Set Default
     parent.setAttribute('data-value', def);
     const span = parent.querySelector('.select-selected span');
     
     if(def === 'none' || def === '0' || def === 0) {
         span.textContent = (id.includes('Suffix') || def === 'none') ? 'None' : 'None (+0%)';
-        // Try to find the specific "None" item name if available
         if(!isStr && data.length > 0) {
              const found = data.find(x => (x.val||x.base) == def);
              if(found) span.textContent = found.name;
@@ -218,11 +296,7 @@ function initDropdown(id, data, def) {
        if(found) span.textContent = isStr ? found : found.name;
        else span.textContent = "Select";
     }
-    
-    // Mark selected in list
-    s.querySelectorAll('div').forEach(d => {
-        if(d.getAttribute('data-value') == def) d.classList.add('same-as-selected');
-    });
+    s.querySelectorAll('div').forEach(d => { if(d.getAttribute('data-value') == def) d.classList.add('same-as-selected'); });
 }
 
 function initRankDropdowns() {
@@ -232,7 +306,6 @@ function initRankDropdowns() {
         rankCostsData.forEach((_, i) => s.innerHTML += `<div data-value="${i}">Rank ${i}</div>`);
         s.parentElement.setAttribute('data-value', id.startsWith('c') ? '0':'1');
         s.previousElementSibling.querySelector('span').textContent = `Rank ${id.startsWith('c') ? '0':'1'}`;
-        // Set initial selected class
         const def = id.startsWith('c') ? '0':'1';
         const opt = s.querySelector(`div[data-value="${def}"]`);
         if(opt) opt.classList.add('same-as-selected');
@@ -306,30 +379,43 @@ function addUnitInput() {
 }
 
 /* --- CALCULATION UPDATES --- */
+function updateAll() { 
+    if(rankMpc) rankMpc.recalc();
+    if(rankCurrent) rankCurrent.recalc();
+    if(masteryBase) masteryBase.recalc();
+    if(masteryCurrent) masteryCurrent.recalc();
+    if(damageBase) damageBase.recalc();
 
-function updateAll() { updateMastery(); updateDamage(); updateRank(); updatePotential(); updateGacha(); updateWave(); }
+    updateMastery(); 
+    updateDamage(); 
+    updateRank(); 
+    updatePotential(); 
+    updateGacha(); 
+    updateWave(); 
+}
 
 function updateMastery() {
-    const base = parseInput('dmgInput', 'suffixSelect');
-    const cur = parseInput('currentMasteryInput', 'currentMasterySuffixSelect');
+    const base = masteryBase.val;
+    const cur = masteryCurrent.val;
+    
     let dps = (base > 0n) ? base * BigInt(Math.round(state.masteryCps * 100)) / 100n : 0n;
     
-    const resBox = getEl('resultBox'); if(resBox) resBox.innerHTML = dps ? formatNumber(dps) : "--";
-    const phRes = getEl('perHourResult'); if(phRes) phRes.innerHTML = dps ? formatNumber(dps * 3600n) : "--";
-    const pdRes = getEl('perDayResult'); if(pdRes) pdRes.innerHTML = dps ? formatNumber(dps * 86400n) : "--";
+    const resBox = getEl('resultBox'); if(resBox) resBox.innerHTML = dps ? GameNum.format(dps) : "--";
+    const phRes = getEl('perHourResult'); if(phRes) phRes.innerHTML = dps ? GameNum.format(dps * 3600n) : "--";
+    const pdRes = getEl('perDayResult'); if(pdRes) pdRes.innerHTML = dps ? GameNum.format(dps * 86400n) : "--";
     
     const sec = BigInt((parseInt(getVal('dayInput'))||0)*86400 + (parseInt(getVal('hourInput'))||0)*3600 + (parseInt(getVal('minuteInput'))||0)*60);
-    const tmRes = getEl('totalMasteryResult'); if(tmRes) tmRes.innerHTML = (base > 0n || cur > 0n) ? formatNumber(cur + (dps * sec)) : "--";
+    const tmRes = getEl('totalMasteryResult'); if(tmRes) tmRes.innerHTML = (base > 0n || cur > 0n) ? GameNum.format(cur + (dps * sec)) : "--";
 }
 
 function updateRank() {
-    const mpc = parseInput('rankMpcInput', 'rankMpcSuffix');
-    const cur = parseInput('rankCurrentMasteryInput', 'rankCurrentMasterySuffix');
+    const mpc = rankMpc.val;
+    const cur = rankCurrent.val;
     const start = parseInt(getDataVal('currentRankSelect')) || 0;
     const end = parseInt(getDataVal('targetRankSelect')) || 1;
     
     let mps = (mpc > 0n) ? mpc * BigInt(Math.round(state.rankCps * 100)) / 100n : 0n;
-    const rMps = getEl('rankMpsResult'); if(rMps) rMps.innerHTML = mps ? formatNumber(mps) : "--";
+    const rMps = getEl('rankMpsResult'); if(rMps) rMps.innerHTML = mps ? GameNum.format(mps) : "--";
 
     const bar = getEl('rankProgressBar'), txt = getEl('rankPercentLabel');
     const tCost = getEl('rankCostResult'), tRem = getEl('rankCostRemainingResult'), tTime = getEl('rankTimeResult');
@@ -342,11 +428,11 @@ function updateRank() {
     }
 
     let cost = 0n;
-    for(let i=start+1; i<=end; i++) if(i < rankCostsData.length) cost += parseSuffixed(rankCostsData[i]);
+    for(let i=start+1; i<=end; i++) if(i < rankCostsData.length) cost += GameNum.parse(rankCostsData[i]);
     
-    tCost.innerHTML = formatNumber(cost);
+    tCost.innerHTML = GameNum.format(cost);
     const rem = (cost > cur) ? cost - cur : 0n;
-    tRem.innerHTML = formatNumber(rem);
+    tRem.innerHTML = GameNum.format(rem);
     
     const pct = (cost > 0n) ? Math.min(100, Number((cur * 10000n) / cost) / 100) : 0;
     bar.style.width = pct + "%"; txt.innerHTML = pct.toFixed(1) + "%";
@@ -360,73 +446,57 @@ function updatePotential() {
     const wVal = parseFloat(getVal('itemWeaponInput'));
     const base = BigInt(Math.round((isNaN(wVal) || wVal === 0 ? 1 : wVal) * 100));
 
-    // Multipliers config to save space
-    const config = [
+    const globalConfig = [
         {id:'potDungeonCoinInput',t:'n'}, {id:'potDungeonCurrencyInput',t:'n'},
-        {id:'potWiseTrainerInput',t:'200'}, {id:'potPirateTrainerInput',t:'200'},
-        {id:'potBreathTrainerInput',t:'200'}, {id:'potLeveTrainerInput',t:'200'},
         {id:'itemAccessoryInput',t:'n'}, {id:'playerStatsInput',t:'n'},
         {id:'playerAuraInput',t:'n'}, {id:'playerAvatarInput',t:'n'},
-        {id:'potBijuuSelect',t:'v'}, {id:'potTitlesSelect',t:'v'},
-        {id:'potRaceSelect',t:'v'}, {id:'potSayajinSelect',t:'v'},
-        {id:'potHakiSelect',t:'v'}, {id:'potFruitsSelect',t:'v'},
-        {id:'potBreathingSelect',t:'v'}, {id:'potOrgSelect',t:'v'},
-        {id:'potTitanSelect',t:'v'}, {id:'potTitanPetSelect',t:'v'},
-        {id:'potShinobiRaidSelect',t:'v'}, {id:'potDungeonSelect',t:'v'},
-        {id:'potShadowsSelect',t:'v'}, {id:'potShadowGateSelect',t:'v'},
-        {id:'potSoloRankSelect',t:'v'}
+        {id:'potShinobiRaidSelect',t:'v'}, {id:'potDungeonSelect',t:'v'}
     ];
 
     let product = base;
     let factorCount = 0;
 
-    // Process Simple Configs
-    config.forEach(c => {
+    globalConfig.forEach(c => {
         let val = 100n;
-        if(c.t === 'v') {
-            val = BigInt(getDataVal(c.id));
-        } else if(c.t === 'n' || c.t === '200') {
-            const raw = parseInt(getVal(c.id)) || 0;
-            if(c.t === '200' && raw > 200) { getEl(c.id).value = 200; val = 300n; } // 100+200
-            else val = BigInt(raw + 100);
-        }
-        product *= val;
-        factorCount++;
+        if(c.t === 'v') { val = BigInt(getDataVal(c.id)); } 
+        else if(c.t === 'n') { val = BigInt((parseInt(getVal(c.id)) || 0) + 100); }
+        product *= val; factorCount++;
     });
 
-    // Special: Magic Eye
-    const eyeBase = parseFloat(getDataVal('potMagicEyeSelect'));
-    let eyeLvl = parseInt(getVal('potMagicEyeLevel')) || 0;
-    if (eyeLvl > 50) { eyeLvl = 50; getEl('potMagicEyeLevel').value = 50; }
-    let eyeBonus = eyeBase + (eyeBase * 0.1 * eyeLvl);
-    if (Math.round(eyeBonus) === 1098 && eyeLvl === 50) eyeBonus = 1100;
-    product *= BigInt(Math.round(100 + eyeBonus)); factorCount++;
-    // Update Span
-    const eyeItem = magicEyeData.find(e => e.base === eyeBase);
-    if(eyeItem) qs('[data-id="potMagicEyeSelect"] span').textContent = `${eyeItem.name.split(' (')[0]} (+${Math.round(eyeBonus)}%)`;
+    mapUIConfig.forEach(map => {
+        map.items.forEach(item => {
+            if (item.type === 'select') {
+                product *= BigInt(getDataVal(item.id)); factorCount++;
+            } 
+            else if (item.type === 'trainer') {
+                const raw = parseInt(getVal(item.id)) || 0;
+                let val = raw + 100;
+                if (raw > 200) { getEl(item.id).value = 200; val = 300; }
+                product *= BigInt(val); factorCount++;
+            }
+            else if (item.type === 'special') {
+                const baseVal = parseFloat(getDataVal(item.id));
+                let lvl = parseInt(getVal(item.lvlId)) || 0;
+                if (lvl > 50) { lvl = 50; getEl(item.lvlId).value = 50; }
+                let bonus = baseVal + (baseVal * 0.1 * lvl);
+                if (Math.round(bonus) === 1098 && lvl === 50) bonus = 1100;
+                product *= BigInt(Math.round(100 + bonus)); factorCount++;
+                const dataSrc = item.source; 
+                const foundItem = dataSrc.find(e => e.base === baseVal);
+                if(foundItem) qs(`[data-id="${item.id}"] span`).textContent = `${foundItem.name.split(' (')[0]} (+${Math.round(bonus)}%)`;
+            }
+        });
+    });
 
-    // Special: Demon Art
-    const daBase = parseFloat(getDataVal('potDemonArtSelect'));
-    let daLvl = parseInt(getVal('potDemonArtLevel')) || 0;
-    if (daLvl > 50) { daLvl = 50; getEl('potDemonArtLevel').value = 50; }
-    let daBonus = daBase + (daBase * 0.1 * daLvl);
-    if (Math.round(daBonus) === 1098 && daLvl === 50) daBonus = 1100;
-    product *= BigInt(Math.round(100 + daBonus)); factorCount++;
-    const daItem = demonArtData.find(e => e.base === daBase);
-    if(daItem) qs('[data-id="potDemonArtSelect"] span').textContent = `${daItem.name.split(' (')[0]} (+${Math.round(daBonus)}%)`;
-
-    // Special: Rank
     const r = BigInt(getDataVal('potRankSelect'));
     if (r > 0n) product *= (100n + (100n * (2n ** (r - 1n)))); else product *= 100n;
     factorCount++;
 
-    // Special: Units
     let uTot = 0;
     document.querySelectorAll('.unit-input').forEach(i => uTot += parseFloat(i.value)||0);
     getEl('unitsTotalResult').innerHTML = uTot.toLocaleString() + "%";
     product *= BigInt(Math.round(100 + uTot)); factorCount++;
 
-    // Special: Achievements
     const secret = BigInt(getDataVal('achieveSelect1'));
     let other = 0;
     for(let i=2; i<=achievementsData.length; i++) other += (parseInt(getDataVal(`achieveSelect${i}`)||100) - 100);
@@ -434,18 +504,16 @@ function updatePotential() {
     product *= secret; factorCount++;
     product *= BigInt(100 + other); factorCount++;
 
-    // Final Math
     const divisor = 100n ** BigInt(factorCount);
     let result = product / divisor;
-
     result = result * BigInt(state.potentialMult);
     if (state.potentialPotionMult === 1.5) result = (result * 15n) / 10n;
     
-    const potRes = getEl('potMpcResult'); if(potRes) potRes.innerHTML = (result > 0n) ? formatNumber(result) : "0";
+    const potRes = getEl('potMpcResult'); if(potRes) potRes.innerHTML = (result > 0n) ? GameNum.format(result) : "0";
 }
 
 function updateDamage() {
-    const baseDmg = parseInput('damageDmgInput', 'damageSuffixSelect');
+    const baseDmg = damageBase.val;
     const critPercent = parseFloat(getVal('critInput')) || 0;
     const heroPercent = parseFloat(getVal('heroDmgInput')) || 0;
     
@@ -453,7 +521,7 @@ function updateDamage() {
     const hpString = mobSel ? mobSel.getAttribute('data-hp') : "0";
     const hpBox = getEl('mobHpResultBox'); if(hpBox) hpBox.textContent = hpString || "--";
     
-    const mobHp = parseSuffixed(hpString);
+    const mobHp = GameNum.parse(hpString);
     const mobCount = parseInt(getDataVal('mobCountSelect')) || 1;
 
     const multScaled = BigInt(Math.round(1000 + (critPercent * 5))); 
@@ -469,7 +537,7 @@ function updateDamage() {
     if(!dps) return;
     if (baseDmg <= 0n) { dps.innerHTML="--"; mpm.innerHTML="--"; mph.innerHTML="--"; ttk.innerHTML="0s"; dMin.innerHTML="--"; dHr.innerHTML="--"; return; }
     
-    dps.innerHTML = formatNumber(totalNum / 100000n);
+    dps.innerHTML = GameNum.format(totalNum / 100000n);
 
     if (mobHp <= 0n) { ttk.innerHTML="Select Mob"; mpm.innerHTML="--"; mph.innerHTML="--"; dMin.innerHTML="--"; dHr.innerHTML="--"; return; }
 
@@ -507,7 +575,7 @@ function updateGacha() {
     const prob = ((parseFloat(getVal('gachaLegInput'))||0) + (parseFloat(getVal('gachaMythInput'))||0)) / 100;
     const egg = qs('[data-id="eggCostSelect"]');
     if(!egg) return;
-    const cost = parseSuffixed(egg.getAttribute('data-cost'));
+    const cost = GameNum.parse(egg.getAttribute('data-cost'));
 
     const baseT = state.gachaFast ? 1.2 : 2.0;
     const avgT = baseT + ((1 - Math.pow(1 - prob, amt)) * 1.0);
@@ -518,7 +586,7 @@ function updateGacha() {
 
     getEl('gachaRealSpeedResult').innerHTML = eps.toLocaleString(undefined, {maxFractionDigits: 2});
     getEl('gachaPerHourResult').innerHTML = Math.floor(eps * 3600).toLocaleString();
-    getEl('gachaTotalCostResult').innerHTML = formatNumber(BigInt(opens) * cost);
+    getEl('gachaTotalCostResult').innerHTML = GameNum.format(BigInt(opens) * cost);
     getEl('gachaTotalCostLabel').innerHTML = `Total ${egg.getAttribute('data-curr')} Cost`;
     getEl('gachaTotalOpensResult').innerHTML = opens.toLocaleString();
 }
@@ -537,8 +605,8 @@ function updateWave() {
     const els = { mob: getEl('waveMobHpResult'), boss: getEl('waveBossHpResult'), total: getEl('waveTotalHpResult'), dps: getEl('waveDpsResult') };
     if (!data || mode === "None") { Object.values(els).forEach(e => {if(e) e.innerHTML = "--"}); return; }
 
-    let hp = parseSuffixed(data.base);
-    let inc = parseSuffixed(data.increment);
+    let hp = GameNum.parse(data.base);
+    let inc = GameNum.parse(data.increment);
     const isShinobi = (mode === "Shinobi" || mode === "Shadow Gate");
     
     if (isShinobi) {
@@ -563,10 +631,10 @@ function updateWave() {
     let mobHp = (mode === "AoT Defense") ? hp / 4n : (hp * 12n) / 100n;
     let total = hp + mobHp;
 
-    els.mob.innerHTML = formatNumber(mobHp);
-    els.boss.innerHTML = formatNumber(hp);
-    els.total.innerHTML = formatNumber(total);
-    els.dps.innerHTML = formatNumber(total / 60n);
+    els.mob.innerHTML = GameNum.format(mobHp);
+    els.boss.innerHTML = GameNum.format(hp);
+    els.total.innerHTML = GameNum.format(total);
+    els.dps.innerHTML = GameNum.format(total / 60n);
 }
 
 /* --- UI HELPERS --- */
@@ -583,28 +651,6 @@ function setupMultiplierToggle(onId, offId, key, cb) {
     if(!on || !off) return;
     on.onclick = () => { state[key] = 2; on.classList.add('active'); off.classList.remove('active'); cb(); };
     off.onclick = () => { state[key] = 1; off.classList.add('active'); on.classList.remove('active'); cb(); };
-}
-
-function setupSuffixInput(inp, selId, cb) {
-    const h = () => {
-        const m = inp.value.trim().match(/^([\d\.]+)\s*([a-zA-Z]+)$/);
-        if (m && suffixMap[m[2].toLowerCase()]) {
-            inp.value = m[1];
-            const sel = qs(`[data-id="${selId}"]`);
-            if(sel) {
-                const val = suffixMap[m[2].toLowerCase()];
-                sel.setAttribute('data-value', val);
-                sel.querySelector('span').textContent = val;
-                const items = sel.querySelectorAll('.select-items div');
-                items.forEach(d => d.classList.remove('same-as-selected'));
-                const match = Array.from(items).find(d => d.getAttribute('data-value') == val);
-                if(match) match.classList.add('same-as-selected');
-            }
-        }
-        cb();
-    };
-    inp.addEventListener('blur', h); 
-    inp.addEventListener('keydown', e => { if(e.key==='Enter') { e.preventDefault(); h(); inp.blur(); }});
 }
 
 function setTheme(name) {
@@ -670,7 +716,7 @@ function setupCustomSelect(sel) {
                 });
 
                 const span = selected.querySelector('span');
-                if(span) { span.textContent = txt; fitTextToContainer(span); }
+                if(span) span.textContent = txt;
 
                 // Update visual state of original items
                 items.querySelectorAll('div').forEach(d => d.classList.remove('same-as-selected'));
@@ -732,20 +778,12 @@ function maximizeSection(section) {
             const txt = last.textContent;
             sel.setAttribute('data-value', val);
             const span = sel.querySelector('span');
-            span.textContent = txt; fitTextToContainer(span);
+            span.textContent = txt;
         }
     });
-    section.querySelectorAll('input.numeric-input, input.compact-input').forEach(input => {
+    section.querySelectorAll('input.numeric-input').forEach(input => {
         input.value = input.id.toLowerCase().includes('level') ? 50 : 200; 
     });
-}
-
-function fitTextToContainer(span) {
-    if(!span) return;
-    let size = 16; span.style.fontSize = size + 'px';
-    const parent = span.parentElement; if(!parent || parent.clientWidth === 0) return; 
-    const maxWidth = parent.clientWidth - 45; 
-    while (span.scrollWidth > maxWidth && size > 9) { size--; span.style.fontSize = size + 'px'; }
 }
 
 window.addEventListener('resize', closeAllPortals);

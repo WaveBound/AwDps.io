@@ -20,7 +20,7 @@ input { user-select: text; cursor: text; -webkit-appearance: none; appearance: t
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* --- Shared Components --- */
-.numeric-input, .select-selected, .compact-input, .mode-btn, .max-btn, .tab-button, .add-unit-btn, .back-btn {
+.numeric-input, .select-selected, .mode-btn, .max-btn, .tab-button, .add-unit-btn, .back-btn {
   font-family: 'Inter', sans-serif; transition: var(--trans);
 }
 .input-row, .input-row-multi, .rank-select-row, .time-input-group, .compact-row, .select-selected, .tab-nav, .mode-toggle {
@@ -45,22 +45,25 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
   width: 100%; height: 40px; padding: 0 16px; background: var(--bg-input); color: var(--text-main);
   border: 1px solid var(--primary-border); border-radius: var(--radius-sm); font-size: 14px; font-weight: 500;
 }
-.compact-input {
-  width: 40px; padding: 2px 0; text-align: center; font-size: 11px; font-weight: 700;
-  background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 4px; color: var(--primary-light);
-}
 /* Focus States */
 .numeric-input:focus, .select-selected:hover, .select-selected.select-arrow-active, 
-.compact-input:focus, .max-btn:hover, .add-unit-btn:hover {
+.max-btn:hover, .add-unit-btn:hover {
   border-color: var(--primary-light); outline: none;
 }
-.numeric-input:focus, .compact-input:focus, .select-selected:hover, .select-selected.select-arrow-active { background: #202023; }
+.numeric-input:focus, .select-selected:hover, .select-selected.select-arrow-active { background: #202023; }
 
 /* Custom Select Specifics */
 .custom-select { position: relative; width: 125px; flex-shrink: 0; }
 .custom-select.full-width { width: 100%; } .custom-select.compact { width: auto; flex: 1; }
 .select-selected { justify-content: space-between; cursor: pointer; }
-.select-selected span { white-space: nowrap; overflow: hidden; margin-right: 10px; width: 100%; }
+
+/* GLOBAL TEXT OVERFLOW HANDLING */
+/* Min-width 0 is required for ellipsis to work inside flex containers */
+.select-selected span { 
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+  margin-right: 10px; width: 100%; display: block; 
+}
+
 .select-arrow { 
   border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-muted); 
   transition: transform 0.2s; 
@@ -88,11 +91,17 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 /* --- Side Panels --- */
 .side-column {
   position: absolute; top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 20px; width: 270px; z-index: 1; pointer-events: none;
+  display: flex; flex-direction: column; gap: 20px; 
+  width: 270px; min-width: 270px; max-width: 270px; /* FIXED WIDTH */
+  z-index: 1; pointer-events: none;
 }
 .side-column.left-aligned { right: 100%; margin-right: 20px; align-items: flex-end; }
 .side-column.right-aligned { left: 100%; margin-left: 20px; align-items: flex-start; }
-.side-panel { padding: 22px; display: none; opacity: 0; pointer-events: auto; }
+
+.side-panel { 
+  padding: 22px; display: none; opacity: 0; pointer-events: auto; 
+  width: 100%; box-sizing: border-box; /* Fill column width */
+}
 .side-panel.active { display: flex; animation: entryFade 0.4s ease forwards; }
 
 .side-column.right-aligned .side-panel.active { --tx: -10px; }
@@ -105,14 +114,11 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
   flex: 1; padding: 10px; background: transparent; border: 1px solid transparent; border-radius: 8px;
   color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer;
 }
-/* Hover State: Subtle feedback when moving mouse over tabs */
 .tab-button:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-main);
   border-color: rgba(255, 255, 255, 0.1);
 }
-
-/* Active State: Strong gradient & Glow (The tab you are on) */
 .tab-button.active {
   background: #000 var(--active-gradient); 
   border: 1px solid var(--primary-border);
@@ -212,8 +218,22 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 .back-btn:hover { color: var(--primary-light); }
 
 .map-center-limit { width: 25%; }
-.level-input-wrapper { display: flex; align-items: center; gap: 5px; }
-.level-label { font-size: 9px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Joined Input Group for Level/Select */
+.joined-row { display: flex; width: 100%; }
+.joined-row .custom-select { 
+  flex: 1; 
+  width: auto; 
+  min-width: 0; /* CRITICAL for ellipsis in flex child */
+}
+.joined-row .custom-select .select-selected { 
+  border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; 
+}
+.joined-row .level-input { 
+  width: 35px; border-top-left-radius: 0; border-bottom-left-radius: 0; 
+  text-align: center; padding: 0 5px; flex-shrink: 0;
+}
+.joined-row .level-input:focus { z-index: 2; position: relative; }
 
 /* Themes & Secrets */
 .drop-theme { --sub-primary: #facc15; --sub-border: #ca8a04; --sub-glow: rgba(250, 204, 21, 0.4); --sub-dim: rgba(250, 204, 21, 0.1); border-color: var(--sub-border); }
@@ -243,7 +263,9 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 
 @media (max-width: 1650px) {
   .side-column { 
-    position: relative; top: auto; transform: none !important; margin: 20px auto 0; width: 100%; max-width: 600px; align-items: stretch !important;
+    position: relative; top: auto; transform: none !important; margin: 20px auto 0; 
+    width: 100%; min-width: 0; max-width: 600px; 
+    align-items: stretch !important;
   }
   .side-column.left-aligned, .side-column.right-aligned { left: auto; right: auto; margin: 0 auto; }
   .side-panel.active { --tx: 0; --ty: -10px; }
