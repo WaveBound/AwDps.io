@@ -138,8 +138,8 @@ const gameData = {
     "Desert Land": [ {name:"Cobinha",hp:"40Qa"}, {name:"Buguinho",hp:"600Qa"}, {name:"Marcao",hp:"80Qi"}, {name:"Cometa",hp:"3Sx"}, {name:"Edmundo",hp:"50Sx"}, {name:"Leopardo",hp:"80No"} ],
     "Demon Land": [ {name:"Demon",hp:"500Sx"}, {name:"Lyokko",hp:"80Sp"}, {name:"Jyutaro",hp:"4Oc"}, {name:"Dola",hp:"300Oc"}, {name:"Mokushibo",hp:"10No"}, {name:"Alaza",hp:"6Dd"} ],
     "Paradis": [ {name:"Richala",hp:"700Dc"}, {name:"Famale Titan",hp:"80Ud"}, {name:"Mandile",hp:"5.5Dd"}, {name:"Blind",hp:"100Dd"}, {name:"Colosso",hp:"5Td"} , {name:"Elen yage",hp:"200Qid"} ],
-    "Shadow City": [ {name:"TangFak",hp:"8Td"}, {name:"Sunly",hp:"400Qad"}, {name:"Haler",hp:"20Qid"}, {name:"Thomas",hp:"2Sxd"}, {name:"Frieze",hp:"50Spd"}, {name:"Belu",hp:"100Dc"} ],
-    "Marine Island": [ {name:"Soldier",hp:"10Spd"}, {name:"Captain",hp:"50Ocd"}, {name:"Vice Admiral",hp:"2Nod"}, {name:"Admiral",hp:"500Vg"} ]
+    "Shadow City": [ {name:"TangFak",hp:"8Td"}, {name:"Sunly",hp:"400Qad"}, {name:"Haler",hp:"20Qid"}, {name:"Thomas",hp:"2Sxd"}, {name:"Frieze",hp:"50Spd"}, {name:"Belu",hp:"100Dec"} ],
+    "Marine Island": [ {name:"Soldier",hp:"10Spd"}, {name:"Captain",hp:"50Ocd"}, {name:"Vice Admiral",hp:"2Nod"}, {name:"Admiral",hp:"500Dec"} ]
 };
 
 const waveScalingData = {
