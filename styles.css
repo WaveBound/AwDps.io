@@ -8,6 +8,12 @@
   --radius: 16px; --radius-sm: 10px;
   --active-gradient: radial-gradient(circle at center, var(--primary-dim) 0%, transparent 75%);
   --trans: all 0.2s ease; --glow: 0 0 15px var(--primary-glow);
+  
+  /* Status Colors */
+  --status-bg: rgba(220, 38, 38, 0.1);
+  --status-border: rgba(220, 38, 38, 0.25);
+  --status-text: #fca5a5;
+  --status-glow: rgba(220, 38, 38, 0.4);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -23,6 +29,25 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 .numeric-input, .select-selected, .mode-btn, .max-btn, .tab-button, .add-unit-btn, .back-btn { font-family: 'Inter', sans-serif; transition: var(--trans); }
 .input-row, .input-row-multi, .rank-select-row, .time-input-group, .compact-row, .select-selected, .tab-nav, .mode-toggle { display: flex; align-items: center; }
 .bg-glow { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100vw; height: 100vh; background: radial-gradient(circle at center, var(--primary-glow) 0%, transparent 65%); opacity: 0.25; filter: blur(120px); z-index: -1; pointer-events: none; }
+
+/* Status Bar (Discontinued) */
+.status-bar {
+  width: 100%;
+  background: var(--status-bg);
+  border-bottom: 1px solid var(--status-border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.status-icon { color: var(--status-text); filter: drop-shadow(0 0 5px var(--status-glow)); }
+.status-text { color: var(--status-text); font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
+.status-tag { 
+  font-size: 10px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 6px; 
+  text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid var(--status-border);
+}
 
 /* Containers */
 .content-wrapper { position: relative; width: 100%; max-width: 855px; margin: 0 auto; }
@@ -60,7 +85,8 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 @keyframes entryFade { from { opacity: 0; transform: translate(var(--tx, 0), var(--ty, 0)); } to { opacity: 1; transform: translate(0, 0); } }
 
 /* Tabs & Layout */
-.tab-nav { padding: 12px; gap: 8px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); border-radius: var(--radius) var(--radius) 0 0; }
+/* Updated radius to 0 for top corners to sit flush with status bar */
+.tab-nav { padding: 12px; gap: 8px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); border-radius: 0; }
 .tab-button { flex: 1; padding: 10px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
 .tab-button:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); border-color: rgba(255, 255, 255, 0.1); }
 .tab-button.active { background: #000 var(--active-gradient); border: 1px solid var(--primary-border); color: var(--text-main); text-shadow: var(--glow); }
