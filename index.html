@@ -37,8 +37,8 @@
                         <div class="input-group">
                             <label>Click Speed Mode</label>
                             <div class="mode-toggle">
-                                <button id="rankFastBtn" class="mode-btn active">Fast <span class="small">5.8/s</span></button>
-                                <button id="rankSlowBtn" class="mode-btn">Slow <span class="small">4.5/s</span></button>
+                                <button class="mode-btn active" data-role="toggle" data-key="rankCps" data-value="5.8">Fast <span class="small">5.8/s</span></button>
+                                <button class="mode-btn" data-role="toggle" data-key="rankCps" data-value="4.5">Slow <span class="small">4.5/s</span></button>
                             </div>
                         </div>
                     </div>
@@ -48,14 +48,14 @@
                             <div class="rank-select-row">
                                 <div class="custom-select compact" data-id="currentRankSelect">
                                     <div class="select-selected"><span>Rank 0</span><div class="select-arrow"></div></div>
-                                    <div class="select-items select-hide" id="currentRankOptions"></div>
+                                    <div class="select-items select-hide"></div>
                                 </div>
                                 <div class="rank-arrow">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                                 </div>
                                 <div class="custom-select compact" data-id="targetRankSelect">
                                     <div class="select-selected"><span>Rank 1</span><div class="select-arrow"></div></div>
-                                    <div class="select-items select-hide" id="targetRankOptions"></div>
+                                    <div class="select-items select-hide"></div>
                                 </div>
                             </div>
                         </div>
@@ -105,8 +105,8 @@
                             <div class="input-group">
                                 <label>Click Speed Mode</label>
                                 <div class="mode-toggle">
-                                    <button id="fastBtn" class="mode-btn active">Fast <span class="small">5.8/s</span></button>
-                                    <button id="slowBtn" class="mode-btn">Slow <span class="small">4.5/s</span></button>
+                                    <button class="mode-btn active" data-role="toggle" data-key="masteryCps" data-value="5.8">Fast <span class="small">5.8/s</span></button>
+                                    <button class="mode-btn" data-role="toggle" data-key="masteryCps" data-value="4.5">Slow <span class="small">4.5/s</span></button>
                                 </div>
                             </div>
                         </div>
@@ -161,12 +161,12 @@
                                     <div class="select-items select-hide" id="potRankOptions"></div>
                                 </div>
                                 <div class="mode-toggle" style="margin-top: 8px;">
-                                    <button id="pot2xBtn" class="mode-btn">2x Mastery</button>
-                                    <button id="potNo2xBtn" class="mode-btn active">1x Mastery</button>
+                                    <button class="mode-btn" data-role="toggle" data-key="potentialMult" data-value="2">2x Mastery</button>
+                                    <button class="mode-btn active" data-role="toggle" data-key="potentialMult" data-value="1">1x Mastery</button>
                                 </div>
                                 <div class="mode-toggle" style="margin-top: 8px;">
-                                    <button id="potPotionBtn" class="mode-btn">1.5x Potion</button>
-                                    <button id="potNoPotionBtn" class="mode-btn active">No Potion</button>
+                                    <button class="mode-btn" data-role="toggle" data-key="potentialPotionMult" data-value="1.5">1.5x Potion</button>
+                                    <button class="mode-btn active" data-role="toggle" data-key="potentialPotionMult" data-value="1">No Potion</button>
                                 </div>
                             </div>
                         </div>
@@ -180,7 +180,7 @@
                                 <label>Shinobi Raid</label>
                                 <div class="custom-select full-width" data-id="potShinobiRaidSelect">
                                     <div class="select-selected"><span>None (+0%)</span><div class="select-arrow"></div></div>
-                                    <div class="select-items select-hide" id="potShinobiRaidOptions"></div>
+                                    <div class="select-items select-hide"></div>
                                 </div>
                             </div>
                         </div>
@@ -194,7 +194,7 @@
                                 <label>Dungeon Gacha</label>
                                 <div class="custom-select full-width" data-id="potDungeonSelect">
                                     <div class="select-selected"><span>None (+0%)</span><div class="select-arrow"></div></div>
-                                    <div class="select-items select-hide" id="potDungeonOptions"></div>
+                                    <div class="select-items select-hide"></div>
                                 </div>
                             </div>
                         </div>
@@ -254,8 +254,8 @@
                                 <div class="input-group">
                                     <label>Click Speed Mode</label>
                                     <div class="mode-toggle">
-                                        <button id="dmgFastBtn" class="mode-btn active">Fast <span class="small">5.8/s</span></button>
-                                        <button id="dmgSlowBtn" class="mode-btn">Slow <span class="small">4.5/s</span></button>
+                                        <button class="mode-btn active" data-role="toggle" data-key="damageCps" data-value="5.8">Fast <span class="small">5.8/s</span></button>
+                                        <button class="mode-btn" data-role="toggle" data-key="damageCps" data-value="4.5">Slow <span class="small">4.5/s</span></button>
                                     </div>
                                 </div>
                             </div>
@@ -335,8 +335,8 @@
                                 <div class="input-group">
                                     <label>Gamepass Selection</label>
                                     <div class="mode-toggle">
-                                        <button id="gachaFastBtn" class="mode-btn active">Fast Open <span class="small">1.2s Per Open</span></button>
-                                        <button id="gachaNormalBtn" class="mode-btn">No GP <span class="small">2s Per Open</span></button>
+                                        <button class="mode-btn active" data-role="toggle" data-key="gachaFast" data-value="true">Fast Open <span class="small">1.2s Per Open</span></button>
+                                        <button class="mode-btn" data-role="toggle" data-key="gachaFast" data-value="false">No GP <span class="small">2s Per Open</span></button>
                                     </div>
                                 </div>
                             </div>
@@ -352,7 +352,7 @@
                         <div class="input-group">
                             <label>Map (Egg Cost)</label>
                             <div class="custom-select full-width" data-id="eggCostSelect">
-                                <div class="select-selected"><span>Shinobi Village (50)</span><div class="select-arrow"></div></div>
+                                <div class="select-selected"><span>Shinobi Village (25)</span><div class="select-arrow"></div></div>
                                 <div class="select-items select-hide" id="eggCostOptions"></div>
                             </div>
                         </div>
@@ -441,8 +441,8 @@
                 <div class="input-group">
                     <label>Calculation Type</label>
                     <div class="mode-toggle">
-                        <button id="waveObtainBtn" class="mode-btn active">Obtain Wave</button>
-                        <button id="waveClearBtn" class="mode-btn">Clear Wave</button>
+                        <button class="mode-btn active" data-role="toggle" data-key="waveIsObtain" data-value="true">Obtain Wave</button>
+                        <button class="mode-btn" data-role="toggle" data-key="waveIsObtain" data-value="false">Clear Wave</button>
                     </div>
                 </div>
                 
@@ -498,6 +498,7 @@
     <div class="footer">Designed & Built by <span class="footer-tag">@xking.</span></div>
     <div class="secret-zone"><div class="secret-popup"><div class="secret-label">Secret Helper</div><div class="secret-name">@xauroraflare</div></div></div>
 
-    <script src="Math.js"></script>
+    <script src="Data.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
